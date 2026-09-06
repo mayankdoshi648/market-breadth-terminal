@@ -1357,7 +1357,6 @@ function generateSparkline(stock) {
 }
 
 // Open Candlestick & Technical Analysis Modal
-// Open Candlestick & Technical Analysis Modal
 function openStockChartModal(symbol) {
   const stock = AppState.stocksData.find(s => s.symbol === symbol);
   if (!stock) return;

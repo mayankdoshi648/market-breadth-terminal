@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#070a11" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="manifest.json" />
+  <title>Market Breadth Intelligence Terminal | Professional Market Health Cockpit</title>
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="breadth_app.css" />
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="brand-wrapper">
+      <div class="brand-icon">
+        <i data-lucide="activity"></i>
+      </div>
+      <div>
+        <div class="brand-title">MARKET BREADTH</div>
+      </div>
+      <span class="brand-badge">PRO COCKPIT</span>
+    </div>
+
+    <div class="header-controls">
+      <!-- Kotak Neo Status Pill -->
+      <button id="kotak-modal-trigger" class="kotak-status-pill disconnected" title="Kotak Neo API Settings & Authentication">
+        <i data-lucide="link-2"></i>
+        <span id="kotak-status-text">Kotak Neo: Connect</span>
+      </button>
+
+      <!-- Live Status -->
+      <div class="live-indicator">
+        <div id="live-pulse-dot" class="pulse-dot"></div>
+        <span id="live-status-text">Connecting to intelligence feed…</span>
+      </div>
+
+      <!-- Universe Selector -->
+      <select id="universe-select" class="select-input">
+        <option value="nifty50">Universe: Nifty 50 (Leaders)</option>
+        <option value="nifty500">Universe: Nifty 500 (Broad Market)</option>
+      </select>
+
+      <!-- Universe Side-by-Side Comparison -->
+      <button id="universe-compare-btn" class="btn-action" title="Compare Nifty 50 vs Nifty 500 Side-by-Side">
+        <i data-lucide="columns-2"></i> Compare
+      </button>
+
+      <!-- Sound Alerts Toggle -->
+      <button id="alert-sound-toggle-btn" class="btn-action" title="Toggle 50% Breadth Threshold Audio Alerts">
+        <i data-lucide="bell"></i> Sound On
+      </button>
+
+      <!-- Telegram Alert Webhook Button -->
+      <button id="telegram-modal-trigger" class="btn-action" title="Configure Telegram Instant Push Alerts">
+        <i data-lucide="send"></i> Telegram
+      </button>
+
+      <!-- Theme Switcher -->
+      <button id="theme-toggle-btn" class="btn-action" title="Toggle Theme">
+        <i data-lucide="sun"></i> Light
+      </button>
+
+      <!-- Export Dropdown / Buttons -->
+      <button id="export-stocks-csv-btn" class="btn-action" title="Export 500 Stocks Scanner to CSV">
+        <i data-lucide="table"></i> Export Stocks
+      </button>
+
+      <button id="export-csv-btn" class="btn-action" title="Export Breadth Series to CSV">
+        <i data-lucide="download"></i> Export Breadth
+      </button>
+
+      <button id="print-snapshot-btn" class="btn-action" title="Print or Save Snapshot as PDF">
+        <i data-lucide="printer"></i> PDF Snapshot
+      </button>
+
+      <!-- Manual Refresh -->
+      <button id="manual-refresh-btn" class="btn-action primary" title="Refresh Live Data (Hotkey: R)">
+        <i data-lucide="refresh-cw"></i> Refresh
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Terminal Body -->
+  <main class="terminal-main">
+
+    <!-- Top Ticker Strip: Headline Indices & Cap Sizes -->
+    <section id="market-strip-container" class="market-strip-container" aria-label="Key Market Quotes">
+      <!-- Populated via breadth_app.js -->
+    </section>
+
+    <!-- Cockpit Grid: Posture Diagnosis & Tactical Playbook -->
+    <section class="cockpit-grid">
+      <!-- Left: Market Posture & Health Diagnosis -->
+      <div id="breadth-posture-panel" class="posture-panel tone-neutral">
+        <div class="posture-top">
+          <span class="posture-meta-label">Systemic Market Health Diagnosis</span>
+          <div class="health-meter-container">
+            <span class="posture-meta-label">Health Index:</span>
+            <span id="health-score-val" class="health-score-val mono">—</span>
+            <div class="health-bar-track">
+              <div id="health-bar-fill" class="health-bar-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="posture-center">
+          <div class="posture-meta-label">Current Posture</div>
+          <div id="posture-headline-val" class="posture-headline">—</div>
+        </div>
+
+        <div id="posture-diagnosis-val" class="posture-diagnosis-text">
+          Loading market breadth health metrics…
+        </div>
+
+        <!-- Divergence Alert Banner (Appears dynamically) -->
+        <div id="divergence-banner" class="divergence-banner"></div>
+
+        <!-- Advance-Decline (A/D) & Net Breadth Ratio Bar -->
+        <div class="ad-ratio-container">
+          <div class="ad-ratio-top">
+            <span class="posture-meta-label">Advance / Decline Market Pulse</span>
+            <div class="ad-counts mono">
+              <span class="adv-badge">▲ <strong id="ad-adv-count">0</strong> Adv</span>
+              <span class="dec-badge">▼ <strong id="ad-dec-count">0</strong> Dec</span>
+              <span class="unc-badge">— <strong id="ad-unc-count">0</strong> Unch</span>
+            </div>
+          </div>
+          <div class="ad-ratio-bar-track">
+            <div id="ad-bar-adv" class="ad-bar-adv" style="width: 50%;"></div>
+            <div id="ad-bar-dec" class="ad-bar-dec" style="width: 50%;"></div>
+          </div>
+          <div class="ad-ratio-footer">
+            <span>A/D Ratio: <strong id="ad-ratio-val" class="mono text-primary">1.00</strong></span>
+            <span>Net A/D: <strong id="ad-net-val" class="mono text-primary">+0</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Tactical Trader Playbook & Institutional Breadth Oscillators -->
+      <div class="playbook-card">
+        <div class="playbook-header">
+          <div class="playbook-title">
+            <i data-lucide="shield-alert"></i> Tactical Trader Playbook
+          </div>
+          <span class="brand-badge">RULES ENGINE</span>
+        </div>
+
+        <div class="playbook-grid">
+          <div class="playbook-item">
+            <span class="playbook-item-label">Recommended Exposure</span>
+            <span id="playbook-exposure" class="playbook-item-value mono">—</span>
+          </div>
+          <div class="playbook-item">
+            <span class="playbook-item-label">Stop-Loss Discipline</span>
+            <span id="playbook-stops" class="playbook-item-value">—</span>
+          </div>
+          <div class="playbook-item">
+            <span class="playbook-item-label">Optimal Setup Priority</span>
+            <span id="playbook-setups" class="playbook-item-value">—</span>
+          </div>
+          <div class="playbook-item">
+            <span class="playbook-item-label">Focus Theme</span>
+            <span id="playbook-theme" class="playbook-item-value">—</span>
+          </div>
+        </div>
+
+        <!-- Institutional Momentum Gauges (McClellan & NH-NL) -->
+        <div class="institutional-gauges-row">
+          <!-- McClellan Oscillator -->
+          <div class="mini-gauge-box">
+            <div class="mini-gauge-label">
+              <span>McClellan Oscillator</span>
+              <span id="mcclellan-tag" class="mono font-bold text-cyan">NEUTRAL</span>
+            </div>
+            <div class="mini-gauge-val-row">
+              <span id="mcclellan-val" class="mono font-bold font-lg">+14.2</span>
+              <span class="mini-gauge-desc">Threshold: ±100</span>
+            </div>
+          </div>
+
+          <!-- New Highs vs Lows (NH - NL) -->
+          <div class="mini-gauge-box">
+            <div class="mini-gauge-label">
+              <span>52W Highs / Lows</span>
+              <span id="nhnl-tag" class="mono font-bold text-green">NET BULLISH</span>
+            </div>
+            <div class="mini-gauge-val-row">
+              <span id="nhnl-val" class="mono font-bold font-lg">42 / 3</span>
+              <span class="mini-gauge-desc">Net: +39</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Multi-Timeframe Core Breadth Gauges -->
+    <section class="gauges-section">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">
+            <i data-lucide="gauge"></i> Core Moving Average Breadth Gauges
+          </h2>
+          <span class="section-subtitle">% of universe components currently trading above respective Simple Moving Averages</span>
+        </div>
+        <div class="brand-badge">50% MAJORITY BENCHMARK</div>
+      </div>
+
+      <div class="gauges-grid">
+        <!-- 20 DMA Gauge -->
+        <div class="gauge-card-enhanced" data-key="dma20">
+          <div class="gauge-canvas-wrapper">
+            <canvas class="gauge-canvas"></canvas>
+          </div>
+          <div class="gauge-info">
+            <span class="gauge-tag">Short-Term Momentum</span>
+            <div class="gauge-title-main">20 DMA — LEADERS</div>
+            <div class="gauge-sub-desc">Fast momentum & leading stocks health</div>
+            <div class="gauge-status-row">
+              <span class="gauge-pct-badge mono">—</span>
+              <span class="gauge-trend-chip">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 50 DMA Gauge -->
+        <div class="gauge-card-enhanced" data-key="dma50">
+          <div class="gauge-canvas-wrapper">
+            <canvas class="gauge-canvas"></canvas>
+          </div>
+          <div class="gauge-info">
+            <span class="gauge-tag">Medium-Term Trend</span>
+            <div class="gauge-title-main">50 DMA — CORE</div>
+            <div class="gauge-sub-desc">Primary institutional accumulation support</div>
+            <div class="gauge-status-row">
+              <span class="gauge-pct-badge mono">—</span>
+              <span class="gauge-trend-chip">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 200 DMA Gauge -->
+        <div class="gauge-card-enhanced" data-key="dma200">
+          <div class="gauge-canvas-wrapper">
+            <canvas class="gauge-canvas"></canvas>
+          </div>
+          <div class="gauge-info">
+            <span class="gauge-tag">Secular Market Foundation</span>
+            <div class="gauge-title-main">200 DMA — FOUNDATION</div>
+            <div class="gauge-sub-desc">Long-term structural bull/bear dividing line</div>
+            <div class="gauge-status-row">
+              <span class="gauge-pct-badge mono">—</span>
+              <span class="gauge-trend-chip">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Dual Time Series Charts -->
+    <section class="charts-container">
+      <!-- Surface Chart -->
+      <div class="chart-panel-enhanced">
+        <div class="chart-panel-header">
+          <div class="chart-panel-title">
+            <i data-lucide="trending-up"></i> Benchmark Index (Surface Price)
+          </div>
+          <div class="chart-timeframe-selector">
+            <button class="tf-btn" data-tf="1M">1M</button>
+            <button class="tf-btn" data-tf="3M">3M</button>
+            <button class="tf-btn active" data-tf="6M">6M</button>
+            <button class="tf-btn" data-tf="1Y">1Y</button>
+          </div>
+        </div>
+        <div class="canvas-container">
+          <canvas id="index-chart-canvas"></canvas>
+        </div>
+      </div>
+
+      <!-- Internal Breadth Chart -->
+      <div class="chart-panel-enhanced">
+        <div class="chart-panel-header">
+          <div class="chart-panel-title">
+            <i data-lucide="layers"></i> Market Breadth Internals (% Above DMA)
+          </div>
+          <span class="section-subtitle">20 / 50 / 200 DMA multi-track</span>
+        </div>
+        <div class="canvas-container">
+          <canvas id="breadth-pct-chart-canvas"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sector Radar & Matrix -->
+    <section class="sector-matrix-section">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">
+            <i data-lucide="layout-grid"></i> Sector Health Matrix &amp; Heatmap
+          </h2>
+          <span class="section-subtitle">Tracking 16 Sector Indices across EMA 20 / 50 / 200 &amp; Heatmap Visualizer</span>
+        </div>
+        <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+          <div class="view-mode-toggle">
+            <button id="sector-view-cards-btn" class="toggle-mode-btn active" title="Cards View"><i data-lucide="grid"></i> Cards</button>
+            <button id="sector-view-heatmap-btn" class="toggle-mode-btn" title="Heatmap View (Hotkey: H)"><i data-lucide="flame"></i> Heatmap</button>
+            <button id="sector-view-rrg-btn" class="toggle-mode-btn" title="Relative Rotation Graph (RRG)"><i data-lucide="compass"></i> Rotation RRG</button>
+          </div>
+          <div class="sector-filter-row">
+            <button class="filter-chip sector-filter-chip active" data-filter="all">All Sectors</button>
+            <button class="filter-chip sector-filter-chip" data-filter="bullish">Bullish Bias</button>
+            <button class="filter-chip sector-filter-chip" data-filter="mixed">Mixed Bias</button>
+            <button class="filter-chip sector-filter-chip" data-filter="bearish">Bearish Bias</button>
+            <button class="filter-chip sector-filter-chip" data-filter="gainers">Top Gainers</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card View -->
+      <div id="sector-grid-container" class="sector-grid-enhanced">
+        <!-- Populated via breadth_app.js -->
+      </div>
+
+      <!-- Heatmap View -->
+      <div id="sector-heatmap-container" class="sector-heatmap-wrapper hidden">
+        <div class="heatmap-header-info">
+          <span>Heatmap Intensity: <strong style="color: var(--bull-green);">Green (Gainers)</strong> vs <strong style="color: var(--bear-red);">Red (Decliners)</strong> — Tile size reflects relative market prominence</span>
+          <span id="heatmap-time-tag" class="mono text-muted">Updated Live</span>
+        </div>
+        <div id="heatmap-tiles-grid" class="heatmap-tiles-grid">
+          <!-- Populated via breadth_app.js -->
+        </div>
+      </div>
+
+      <!-- Sector Relative Rotation Graph (RRG) Quadrants View -->
+      <div id="sector-rrg-container" class="sector-rrg-wrapper hidden">
+        <div class="rrg-header-info">
+          <div class="rrg-legend-badges">
+            <span class="rrg-pill leading">Leading (Green)</span>
+            <span class="rrg-pill weakening">Weakening (Yellow)</span>
+            <span class="rrg-pill lagging">Lagging (Red)</span>
+            <span class="rrg-pill improving">Improving (Blue)</span>
+          </div>
+          <span class="mono text-muted">Benchmark: Nifty 50</span>
+        </div>
+        <div class="rrg-canvas-wrapper">
+          <canvas id="rrg-canvas"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stock-Level Internal Scanner & Inspector -->
+    <section class="scanner-section">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">
+            <i data-lucide="table-properties"></i> Universe Component Breadth Inspector
+          </h2>
+          <span class="section-subtitle">Live moving average alignment, distance from 52-week high, and RS rating</span>
+        </div>
+        <span id="scanner-count-badge" class="brand-badge">0 Stocks</span>
+      </div>
+
+      <div class="scanner-toolbar">
+        <div class="search-wrapper">
+          <i data-lucide="search" class="search-icon"></i>
+          <input 
+            type="text" 
+            id="stock-search-input" 
+            class="search-input" 
+            placeholder="Search symbol, company or sector… (Press '/' to focus)"
+          />
+        </div>
+
+        <div class="scanner-filters">
+          <button class="filter-chip stock-filter-chip active" data-filter="all">All</button>
+          <button class="filter-chip stock-filter-chip watchlist-chip" data-filter="watchlist" title="Show Pinned Favorites (Hotkey: W)">★ Watchlist (<span id="watchlist-count">0</span>)</button>
+          <button class="filter-chip stock-filter-chip strategy-chip" data-filter="stratStage2" title=">20, 50, 200 DMA + Near 52W High + RS >= 80">🎯 Stage 2 Breakouts</button>
+          <button class="filter-chip stock-filter-chip strategy-chip" data-filter="stratOversoldBounce" title="RSI <= 35 and > 200 DMA">⚡ Oversold Pullback</button>
+          <button class="filter-chip stock-filter-chip" data-filter="volumeSurge">🔥 Volume Surge</button>
+          <button class="filter-chip stock-filter-chip" data-filter="allBull">All EMAs Bullish (3/3)</button>
+          <button class="filter-chip stock-filter-chip" data-filter="above20">&gt; 20 DMA</button>
+          <button class="filter-chip stock-filter-chip" data-filter="above50">&gt; 50 DMA</button>
+          <button class="filter-chip stock-filter-chip" data-filter="above200">&gt; 200 DMA</button>
+          <button class="filter-chip stock-filter-chip" data-filter="nearHigh">Within 5% of 52W High</button>
+          <button class="filter-chip stock-filter-chip" data-filter="oversold">Oversold (RSI &le; 40)</button>
+          <button class="filter-chip stock-filter-chip" data-filter="overbought">Overbought (RSI &ge; 70)</button>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="scanner-table">
+          <thead>
+            <tr>
+              <th style="width: 35px; text-align: center;" title="Pin / Favorite">Fav</th>
+              <th data-sort="symbol">Symbol &amp; Company ↕</th>
+              <th data-sort="sector">Sector ↕</th>
+              <th data-sort="last">LTP (₹) ↕</th>
+              <th data-sort="changePct">Day Chg % ↕</th>
+              <th style="width: 65px; text-align: center;">7D Trend</th>
+              <th data-sort="rsi" style="text-align: center;">RSI (14) ↕</th>
+              <th data-sort="volumeSurge" style="text-align: center;">Volume ↕</th>
+              <th data-sort="dma20" style="text-align: center;">20 DMA</th>
+              <th data-sort="dma50" style="text-align: center;">50 DMA</th>
+              <th data-sort="dma200" style="text-align: center;">200 DMA</th>
+              <th data-sort="high52Dist">From 52W High ↕</th>
+              <th data-sort="rsRating">RS Score ↕</th>
+              <th style="text-align: center;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="scanner-table-body">
+            <!-- Populated via breadth_app.js -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Posture Rules Reference Matrix -->
+    <section class="rules-accordion">
+      <div class="rules-head">
+        <h3 class="section-title">
+          <i data-lucide="book-open"></i> Institutional Market Posture Rules Reference
+        </h3>
+        <span class="brand-badge">METHODOLOGY</span>
+      </div>
+      <div class="rules-body">
+        <table class="rules-table">
+          <thead>
+            <tr>
+              <th>DMA Signal Profile</th>
+              <th>Underlying Market Mechanics</th>
+              <th>Diagnosis</th>
+              <th>Prescribed Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="rule-tone-warn">
+              <td><strong>20 DMA ↓, 50 DMA →, 200 DMA →</strong></td>
+              <td>Short-term leading momentum breaks down first while broader index sustains.</td>
+              <td>Leaders are cracking. Early distribution warning.</td>
+              <td><strong style="color: var(--warn-amber);">STOP PRESSING</strong> — Tighten stops to pivot lows.</td>
+            </tr>
+            <tr class="rule-tone-danger">
+              <td><strong>20 DMA →, 50 DMA ↓, 200 DMA ↓</strong></td>
+              <td>Core and foundational stocks rolling over beneath index surface.</td>
+              <td>Weaker stocks rolling over. Junk rally ending.</td>
+              <td><strong style="color: var(--bear-red);">REDUCE RISK</strong> — Cut lagging positions, raise cash.</td>
+            </tr>
+            <tr class="rule-tone-danger">
+              <td><strong>20 DMA ↓, 50 DMA ↓, 200 DMA ↓</strong></td>
+              <td>Systemic breakdown across all timeframes. Extreme supply.</td>
+              <td>Rally completely lacks internal broad support.</td>
+              <td><strong style="color: var(--bear-red);">SIT OUT</strong> — Preserve capital; trade minimal size.</td>
+            </tr>
+            <tr class="rule-tone-good">
+              <td><strong>20, 50, 200 DMA all &gt; 50%</strong></td>
+              <td>Broad, healthy participation from both leaders and foundation stocks.</td>
+              <td>Participation broad enough for sustainable multi-week advance.</td>
+              <td><strong style="color: var(--bull-green);">GREEN LIGHT — PRESS</strong> — Full position sizing on Stage 2 breakouts.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- App Footer -->
+  <footer class="terminal-footer">
+    <div>
+      <strong>Market Breadth Pro Terminal</strong> &bull; Quantitative Market Health & Internal Breadth Cockpit
+    </div>
+    <div>
+      Data Feed: Kotak Neo (Live Quotes) & Yahoo/Dhan (DMA History) &bull; Not financial advice
+    </div>
+  </footer>
+
+  <!-- Kotak Neo API Configuration Modal -->
+  <div id="kotak-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i data-lucide="shield-check" style="color: var(--accent-cyan);"></i>
+          <span>Kotak Neo API Credentials &amp; 2FA Auth</span>
+        </div>
+        <button id="kotak-modal-close" class="modal-close-btn" title="Close Modal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label class="form-label">API Gateway Environment</label>
+          <select id="kotak-env-select" class="form-input">
+            <option value="production">Live Production (napi.kotaksecurities.com)</option>
+            <option value="sandbox">Developer Sandbox</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Consumer Key</label>
+          <input type="text" id="kotak-consumer-key" class="form-input mono" placeholder="e.g. lM983xYz..." />
+          <span class="form-help">From Neo API Developer Portal</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Consumer Secret</label>
+          <input type="password" id="kotak-consumer-secret" class="form-input mono" placeholder="••••••••••••" />
+          <span class="form-help">Client Secret key</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Registered Mobile / UCC</label>
+          <input type="text" id="kotak-mobile" class="form-input mono" placeholder="e.g. 9876543210" />
+          <span class="form-help">10-digit mobile or Neo Client ID</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">6-Digit MPIN</label>
+          <input type="password" id="kotak-mpin" maxlength="6" class="form-input mono" placeholder="••••••" />
+          <span class="form-help">Trading MPIN</span>
+        </div>
+
+        <div class="form-group full-width">
+          <label class="form-label">TOTP Secret (Automated 2FA)</label>
+          <input type="text" id="kotak-totp-secret" class="form-input mono" placeholder="e.g. JBSWY3DPEHPK3PXP" />
+          <span class="form-help">Base32 Secret key from authenticator for hands-free 2FA token generation (RFC 6238)</span>
+        </div>
+
+        <div class="form-group full-width">
+          <label class="form-label">Connection &amp; Diagnostics Log</label>
+          <div id="kotak-log-console" class="console-log-box">Ready to authenticate. Click "Connect &amp; Test Session" to start.</div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button id="kotak-disconnect-btn" class="btn-action" style="color: var(--bear-red);">
+          <i data-lucide="unlink"></i> Disconnect
+        </button>
+        <button id="kotak-save-connect-btn" class="btn-action primary">
+          <i data-lucide="zap"></i> Connect &amp; Test Session
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Universe Comparison Modal -->
+  <div id="compare-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-card modal-card-wide">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i data-lucide="columns-2" style="color: var(--accent-cyan);"></i>
+          <span>Multi-Universe Breadth Comparison: Nifty 50 vs Nifty 500</span>
+        </div>
+        <button id="compare-modal-close" class="modal-close-btn" title="Close Modal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="compare-container">
+        <!-- Nifty 50 Column -->
+        <div class="compare-col">
+          <div class="compare-col-header">
+            <span class="compare-col-title">Nifty 50 (Leaders)</span>
+            <span class="brand-badge">LARGE CAP</span>
+          </div>
+          <div id="compare-nifty50-posture" class="compare-posture-box">Loading...</div>
+          <div class="compare-metric-row">
+            <span>20 DMA Breadth:</span>
+            <strong id="compare-n50-dma20" class="mono">—</strong>
+          </div>
+          <div class="compare-metric-row">
+            <span>50 DMA Breadth:</span>
+            <strong id="compare-n50-dma50" class="mono">—</strong>
+          </div>
+          <div class="compare-metric-row">
+            <span>200 DMA Breadth:</span>
+            <strong id="compare-n50-dma200" class="mono">—</strong>
+          </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="compare-divider">VS</div>
+
+        <!-- Nifty 500 Column -->
+        <div class="compare-col">
+          <div class="compare-col-header">
+            <span class="compare-col-title">Nifty 500 (Broad Market)</span>
+            <span class="brand-badge">500 STOCKS</span>
+          </div>
+          <div id="compare-nifty500-posture" class="compare-posture-box">Loading...</div>
+          <div class="compare-metric-row">
+            <span>20 DMA Breadth:</span>
+            <strong id="compare-n500-dma20" class="mono">—</strong>
+          </div>
+          <div class="compare-metric-row">
+            <span>50 DMA Breadth:</span>
+            <strong id="compare-n500-dma50" class="mono">—</strong>
+          </div>
+          <div class="compare-metric-row">
+            <span>200 DMA Breadth:</span>
+            <strong id="compare-n500-dma200" class="mono">—</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="compare-insights">
+        <div class="compare-insight-title"><i data-lucide="lightbulb"></i> Quantitative Divergence Insight</div>
+        <div id="compare-divergence-text" class="compare-insight-body">Analyzing cross-universe momentum...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. Interactive Stock Technical Candlestick Modal -->
+  <div id="chart-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-card modal-card-wide">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i data-lucide="candlestick-chart" style="color: var(--bull-green);"></i>
+          <span id="chart-modal-title">RELIANCE — Technical Candlestick &amp; Moving Average Radar</span>
+        </div>
+        <button id="chart-modal-close" class="modal-close-btn" title="Close Modal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="stock-tech-overview">
+        <div class="stock-tech-pill">LTP: <strong id="chart-modal-ltp" class="mono font-bold">₹2,984.50</strong></div>
+        <div class="stock-tech-pill">Day Chg: <strong id="chart-modal-chg" class="mono font-bold text-green">+0.85%</strong></div>
+        <div class="stock-tech-pill">RSI (14): <strong id="chart-modal-rsi" class="mono font-bold">65</strong></div>
+        <div class="stock-tech-pill">RS Rating: <strong id="chart-modal-rs" class="mono font-bold">88</strong></div>
+        <div class="stock-tech-pill">52W Dist: <strong id="chart-modal-52dist" class="mono font-bold">-3.4%</strong></div>
+        <button id="chart-modal-trade-btn" class="btn-action primary" style="margin-left: auto; padding: 0.25rem 0.75rem;">
+          <i data-lucide="zap"></i> Quick Order
+        </button>
+      </div>
+
+      <div class="chart-canvas-box" style="height: 320px; position: relative; margin-top: 0.75rem;">
+        <canvas id="stock-candlestick-canvas"></canvas>
+      </div>
+
+      <div class="stock-ema-distance-row">
+        <div class="ema-dist-badge">20 DMA: <span id="chart-dist-20" class="mono font-bold">—</span></div>
+        <div class="ema-dist-badge">50 DMA: <span id="chart-dist-50" class="mono font-bold">—</span></div>
+        <div class="ema-dist-badge">200 DMA: <span id="chart-dist-200" class="mono font-bold">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Kotak Neo One-Click Order Ticket Modal -->
+  <div id="order-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-card" style="max-width: 460px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i data-lucide="zap" style="color: var(--accent-gold);"></i>
+          <span>Kotak Neo &bull; Instant Order Ticket</span>
+        </div>
+        <button id="order-modal-close" class="modal-close-btn" title="Close Modal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="order-ticket-body">
+        <div class="order-symbol-header">
+          <div>
+            <div id="order-stock-symbol" class="font-bold font-lg mono">RELIANCE</div>
+            <div id="order-stock-name" class="text-muted" style="font-size: 0.75rem;">Reliance Industries Ltd.</div>
+          </div>
+          <div id="order-stock-ltp" class="font-bold font-lg mono text-primary">₹2,984.50</div>
+        </div>
+
+        <div class="order-type-tabs">
+          <button id="order-tab-buy" class="order-side-btn buy active">BUY</button>
+          <button id="order-tab-sell" class="order-side-btn sell">SELL</button>
+        </div>
+
+        <div class="order-form-grid">
+          <div class="form-group">
+            <label class="form-label">Order Type</label>
+            <select id="order-type-select" class="form-input">
+              <option value="MARKET">Market (Instant Fill)</option>
+              <option value="LIMIT">Limit</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Product</label>
+            <select id="order-product-select" class="form-input">
+              <option value="CNC">CNC (Delivery)</option>
+              <option value="MIS">MIS (Intraday)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Quantity (Shares)</label>
+            <input type="number" id="order-qty-input" class="form-input mono" value="1" min="1" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Limit Price (₹)</label>
+            <input type="number" id="order-price-input" class="form-input mono" disabled placeholder="Market Price" />
+          </div>
+        </div>
+
+        <div class="order-estimated-box">
+          <span>Est. Required Margin:</span>
+          <strong id="order-margin-est" class="mono font-bold text-primary">₹2,984.50</strong>
+        </div>
+
+        <button id="order-submit-btn" class="btn-action primary full-width" style="margin-top: 1rem; padding: 0.65rem;">
+          <i data-lucide="check-circle"></i> Place Order via Kotak Neo
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Telegram Alert Webhook Configuration Modal -->
+  <div id="telegram-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-card" style="max-width: 520px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i data-lucide="send" style="color: #229ED9;"></i>
+          <span>Telegram Push Alert Configuration</span>
+        </div>
+        <button id="telegram-modal-close" class="modal-close-btn" title="Close Modal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label class="form-label">Telegram Bot Token</label>
+          <input type="text" id="telegram-bot-token" class="form-input mono" placeholder="e.g. 123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ" />
+          <span class="form-help">Created via @BotFather on Telegram</span>
+        </div>
+
+        <div class="form-group full-width">
+          <label class="form-label">Chat ID or Channel Username</label>
+          <input type="text" id="telegram-chat-id" class="form-input mono" placeholder="e.g. 987654321 or @MyBreadthAlerts" />
+          <span class="form-help">Your personal Chat ID (from @userinfobot) or your alert channel</span>
+        </div>
+
+        <div class="form-group full-width">
+          <label class="form-label">Trigger Conditions</label>
+          <div style="display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.8rem; color: var(--text-secondary);">
+            <label><input type="checkbox" id="tg-alert-posture" checked /> Alert on Market Posture Change (GREEN LIGHT / STOP PRESSING / REDUCE RISK)</label>
+            <label><input type="checkbox" id="tg-alert-dma" checked /> Alert when 20 / 50 DMA Breadth crosses 50% threshold</label>
+            <label><input type="checkbox" id="tg-alert-volume" checked /> Alert on High Volume Breakout stocks</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions" style="margin-top: 1rem;">
+        <button id="telegram-test-btn" class="btn-action">
+          <i data-lucide="send"></i> Send Test Message
+        </button>
+        <button id="telegram-save-btn" class="btn-action primary">
+          <i data-lucide="save"></i> Save Settings
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Alert Notifications Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- App Logic Engine -->
+  <script src="breadth_app.js"></script>
+</body>
+</html>

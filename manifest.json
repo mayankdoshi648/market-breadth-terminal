@@ -1,0 +1,8 @@
+{
+  "name": "Market Breadth Pro",
+  "short_name": "Breadth Pro",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070a11",
+  "theme_color": "#070a11"
+}

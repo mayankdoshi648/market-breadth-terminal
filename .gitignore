@@ -1,0 +1,6 @@
+ cloudflared.exe
+*.zip
+backup_20260905_234926
+kotak_session.json
+.git
+

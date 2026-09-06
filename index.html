@@ -97,6 +97,20 @@
   <!-- Main Terminal Body -->
   <main class="terminal-main">
 
+    <!-- Strip Timeframe Bar (D / W / M / Y) -->
+    <div class="strip-toolbar-row">
+      <div class="strip-toolbar-left">
+        <span class="strip-toolbar-title"><i data-lucide="activity"></i> Benchmark & Index Trend Monitor</span>
+      </div>
+      <div class="strip-tf-control" role="group" aria-label="EMA Trend Timeframe">
+        <span class="tf-control-label">EMA Timeframe:</span>
+        <button type="button" class="strip-tf-btn active" data-stf="D" title="Daily EMA 20/50/200">D</button>
+        <button type="button" class="strip-tf-btn" data-stf="W" title="Weekly EMA 20/50/200">W</button>
+        <button type="button" class="strip-tf-btn" data-stf="M" title="Monthly EMA 20/50/200">M</button>
+        <button type="button" class="strip-tf-btn" data-stf="Y" title="Yearly EMA 20/50/200">Y</button>
+      </div>
+    </div>
+
     <!-- Top Ticker Strip: Headline Indices & Cap Sizes -->
     <section id="market-strip-container" class="market-strip-container" aria-label="Key Market Quotes">
       <!-- Populated via breadth_app.js -->
@@ -322,9 +336,18 @@
           <h2 class="section-title">
             <i data-lucide="gauge"></i> Core Moving Average Breadth Gauges
           </h2>
-          <span class="section-subtitle">% of universe components currently trading above respective Simple Moving Averages</span>
+          <span class="section-subtitle">% of universe components currently trading above respective Moving Averages</span>
         </div>
-        <div class="brand-badge">50% MAJORITY BENCHMARK</div>
+        <div class="gauges-header-actions">
+          <div class="gauge-tf-toggle" role="group" aria-label="Breadth MA Timeframe">
+            <span class="tf-control-label">Breadth TF:</span>
+            <button type="button" class="gauge-tf-btn active" data-gtf="D" title="Daily (20/50/200 DMA)">Daily (D)</button>
+            <button type="button" class="gauge-tf-btn" data-gtf="W" title="Weekly (20/50/200 WMA)">Weekly (W)</button>
+            <button type="button" class="gauge-tf-btn" data-gtf="M" title="Monthly (20/50/200 MMA)">Monthly (M)</button>
+            <button type="button" class="gauge-tf-btn" data-gtf="Y" title="Yearly (20/50/200 YMA)">Yearly (Y)</button>
+          </div>
+          <div class="brand-badge">50% MAJORITY BENCHMARK</div>
+        </div>
       </div>
 
       <div class="gauges-grid">

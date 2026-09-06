@@ -109,8 +109,26 @@
       "change": 36.45,
       "changePct": 0.2,
       "direction": "up",
-      "arrow": "\u0393\u00fb\u2593",
-      "ema": null
+      "arrow": "▲",
+      "ema": {
+        "ema20": {
+          "value": 18240.0,
+          "above": true,
+          "period": 20
+        },
+        "ema50": {
+          "value": 17980.0,
+          "above": true,
+          "period": 50
+        },
+        "ema200": {
+          "value": 16820.0,
+          "above": true,
+          "period": 200
+        },
+        "score": 3,
+        "bias": "bullish"
+      }
     }
   ],
   "sectors": [

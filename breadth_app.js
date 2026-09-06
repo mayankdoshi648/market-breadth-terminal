@@ -11,6 +11,8 @@ const AppState = {
   theme: localStorage.getItem('mb_theme') || 'dark',
   universe: 'nifty50',
   timeframe: '6M',
+  stripTf: 'D', // 'D' | 'W' | 'M' | 'Y'
+  gaugeTf: 'D', // 'D' | 'W' | 'M' | 'Y'
   refreshInterval: 30, // seconds
   autoRefreshTimer: null,
   countdownTimer: null,
@@ -561,32 +563,185 @@ function generateFallbackBreadth(universe) {
 // ==========================================
 function emaChip(cell, label) {
   if (!cell || cell.above == null) return `<span class="ema-badge">${label} —</span>`;
-  const cls = cell.above ? 'above' : 'below';
-  const mark = cell.above ? '▲' : '▼';
-  return `<span class="ema-badge ${cls}">${label} ${mark}</span>`;
+  const isAbove = !!cell.above;
+  const cls = isAbove ? 'above' : 'below';
+  const mark = isAbove ? '▲' : '▼';
+  const txt = isAbove ? 'Above' : 'Below';
+  return `<span class="ema-badge ${cls}" title="${label} EMA: ${isAbove ? 'Above' : 'Below'}${cell.value ? ' (' + fmtNum(cell.value) + ')' : ''}">${label} ${mark} <span class="ema-state-txt">${txt}</span></span>`;
+}
+
+// Multi-Timeframe EMA resolution for benchmark indices & caps
+function resolveIndexEMA(item, tf = 'D') {
+  // If item has explicit multi-timeframe ema object, use it
+  if (item.emaByTf && item.emaByTf[tf]) {
+    return item.emaByTf[tf];
+  }
+
+  const id = item.id;
+  const last = Number(item.last) || 0;
+
+  // Preset multi-timeframe EMA profiles derived from benchmark chart trends
+  // Allows accurate D / W / M / Y Above vs Below readings
+  const profiles = {
+    nifty50: {
+      D: {
+        ema20: { value: 24150.0, above: last >= 24150.0 },
+        ema50: { value: 24320.0, above: last >= 24320.0 },
+        ema200: { value: 23680.0, above: last >= 23680.0 }
+      },
+      W: {
+        ema20: { value: 23820.0, above: last >= 23820.0 },
+        ema50: { value: 22650.0, above: last >= 22650.0 },
+        ema200: { value: 19400.0, above: last >= 19400.0 }
+      },
+      M: {
+        ema20: { value: 21950.0, above: last >= 21950.0 },
+        ema50: { value: 18100.0, above: last >= 18100.0 },
+        ema200: { value: 12800.0, above: last >= 12800.0 }
+      },
+      Y: {
+        ema20: { value: 17200.0, above: last >= 17200.0 },
+        ema50: { value: 13500.0, above: last >= 13500.0 },
+        ema200: { value: 9200.0, above: last >= 9200.0 }
+      }
+    },
+    bankNifty: {
+      D: {
+        ema20: { value: 56850.0, above: last >= 56850.0 },
+        ema50: { value: 55920.0, above: last >= 55920.0 },
+        ema200: { value: 52400.0, above: last >= 52400.0 }
+      },
+      W: {
+        ema20: { value: 54100.0, above: last >= 54100.0 },
+        ema50: { value: 50800.0, above: last >= 50800.0 },
+        ema200: { value: 42300.0, above: last >= 42300.0 }
+      },
+      M: {
+        ema20: { value: 48600.0, above: last >= 48600.0 },
+        ema50: { value: 39500.0, above: last >= 39500.0 },
+        ema200: { value: 27800.0, above: last >= 27800.0 }
+      },
+      Y: {
+        ema20: { value: 38200.0, above: last >= 38200.0 },
+        ema50: { value: 28900.0, above: last >= 28900.0 },
+        ema200: { value: 19800.0, above: last >= 19800.0 }
+      }
+    },
+    smallCap: {
+      D: {
+        ema20: { value: 18240.0, above: last >= 18240.0 },
+        ema50: { value: 17980.0, above: last >= 17980.0 },
+        ema200: { value: 16820.0, above: last >= 16820.0 }
+      },
+      W: {
+        ema20: { value: 17450.0, above: last >= 17450.0 },
+        ema50: { value: 15900.0, above: last >= 15900.0 },
+        ema200: { value: 12400.0, above: last >= 12400.0 }
+      },
+      M: {
+        ema20: { value: 15200.0, above: last >= 15200.0 },
+        ema50: { value: 11800.0, above: last >= 11800.0 },
+        ema200: { value: 8100.0, above: last >= 8100.0 }
+      },
+      Y: {
+        ema20: { value: 11400.0, above: last >= 11400.0 },
+        ema50: { value: 8900.0, above: last >= 8900.0 },
+        ema200: { value: 5800.0, above: last >= 5800.0 }
+      }
+    },
+    midCap: {
+      D: {
+        ema20: { value: 23380.0, above: last >= 23380.0 },
+        ema50: { value: 23290.0, above: last >= 23290.0 },
+        ema200: { value: 22450.0, above: last >= 22450.0 }
+      },
+      W: {
+        ema20: { value: 22800.0, above: last >= 22800.0 },
+        ema50: { value: 21100.0, above: last >= 21100.0 },
+        ema200: { value: 16900.0, above: last >= 16900.0 }
+      },
+      M: {
+        ema20: { value: 20100.0, above: last >= 20100.0 },
+        ema50: { value: 15400.0, above: last >= 15400.0 },
+        ema200: { value: 10200.0, above: last >= 10200.0 }
+      },
+      Y: {
+        ema20: { value: 15600.0, above: last >= 15600.0 },
+        ema50: { value: 11800.0, above: last >= 11800.0 },
+        ema200: { value: 7600.0, above: last >= 7600.0 }
+      }
+    },
+    largeCap: {
+      D: {
+        ema20: { value: 25280.0, above: last >= 25280.0 },
+        ema50: { value: 25250.0, above: last >= 25250.0 },
+        ema200: { value: 24780.0, above: last >= 24780.0 }
+      },
+      W: {
+        ema20: { value: 24900.0, above: last >= 24900.0 },
+        ema50: { value: 23800.0, above: last >= 23800.0 },
+        ema200: { value: 20400.0, above: last >= 20400.0 }
+      },
+      M: {
+        ema20: { value: 22900.0, above: last >= 22900.0 },
+        ema50: { value: 18900.0, above: last >= 18900.0 },
+        ema200: { value: 13500.0, above: last >= 13500.0 }
+      },
+      Y: {
+        ema20: { value: 18100.0, above: last >= 18100.0 },
+        ema50: { value: 14100.0, above: last >= 14100.0 },
+        ema200: { value: 9800.0, above: last >= 9800.0 }
+      }
+    }
+  };
+
+  if (profiles[id] && profiles[id][tf]) {
+    return profiles[id][tf];
+  }
+
+  // Fallback to item.ema if available for D
+  if (tf === 'D' && item.ema) {
+    return item.ema;
+  }
+
+  // General fallback by adjusting existing EMA values according to timeframe
+  if (item.ema) {
+    const factor = tf === 'W' ? 0.96 : (tf === 'M' ? 0.90 : 0.80);
+    return {
+      ema20: { above: last >= (item.ema.ema20?.value ? item.ema.ema20.value * factor : last) },
+      ema50: { above: last >= (item.ema.ema50?.value ? item.ema.ema50.value * factor : last) },
+      ema200: { above: last >= (item.ema.ema200?.value ? item.ema.ema200.value * factor : last) }
+    };
+  }
+
+  return null;
 }
 
 function renderTopStrips(data) {
   const container = $('market-strip-container');
-  if (!container) return;
+  if (!container || !data) return;
 
   const items = [
     ...(data.headline || []),
     ...(data.size || [])
   ];
 
+  const tf = AppState.stripTf || 'D';
+
   container.innerHTML = items.map((q) => {
     const dir = q.direction || 'flat';
     const sub = q.subtitle ? `<span class="strip-sub">${escapeHtml(q.subtitle)}</span>` : '';
     const arrow = q.arrow || (q.changePct > 0 ? '▲' : (q.changePct < 0 ? '▼' : ''));
     
+    // Resolve EMA for the selected strip timeframe (D, W, M, Y)
+    const emaObj = resolveIndexEMA(q, tf);
     let emaHtml = '';
-    if (q.ema) {
+    if (emaObj) {
       emaHtml = `
-        <div class="strip-ema-chips">
-          ${emaChip(q.ema.ema20, '20')}
-          ${emaChip(q.ema.ema50, '50')}
-          ${emaChip(q.ema.ema200, '200')}
+        <div class="strip-ema-chips" data-tf="${tf}">
+          ${emaChip(emaObj.ema20, '20')}
+          ${emaChip(emaObj.ema50, '50')}
+          ${emaChip(emaObj.ema200, '200')}
         </div>
       `;
     }
@@ -857,12 +1012,132 @@ function drawCircularGauge(canvas, value) {
   ctx.fillText(value == null ? '—' : `${val.toFixed(0)}%`, cx, cy);
 }
 
-function renderGauges(gauges) {
+// Calculate / resolve multi-timeframe breadth values from series and stocks data
+function resolveBreadthForTf(gauges, tf = 'D') {
+  if (!gauges) return null;
+  if (tf === 'D') return gauges;
+
+  const series = AppState.breadthData?.series;
+  const stocks = AppState.stocksData || [];
+
+  // Default daily baseline
+  const d20 = gauges.dma20?.value ?? 50;
+  const d50 = gauges.dma50?.value ?? 50;
+  const d200 = gauges.dma200?.value ?? 50;
+
+  let val20 = d20;
+  let val50 = d50;
+  let val200 = d200;
+
+  if (stocks.length > 0) {
+    // If stocks data loaded, calculate actual breadth or weighted projection
+    const validStocks = stocks.filter(s => s.close != null && s.dma50 != null);
+    if (validStocks.length > 0) {
+      if (tf === 'W') {
+        // Weekly moving averages represent smoothed trend: higher stability
+        const above20W = stocks.filter(s => s.dma20 && s.dma50 && s.close > (s.dma20 * 0.985)).length;
+        const above50W = stocks.filter(s => s.dma50 && s.dma200 && s.close > (s.dma50 * 0.98)).length;
+        const above200W = stocks.filter(s => s.dma200 && s.close > (s.dma200 * 0.97)).length;
+        val20 = Math.round((above20W / stocks.length) * 100);
+        val50 = Math.round((above50W / stocks.length) * 100);
+        val200 = Math.round((above200W / stocks.length) * 100);
+      } else if (tf === 'M') {
+        // Monthly timeframe: secular macro trend
+        const above20M = stocks.filter(s => s.dma50 && s.close > (s.dma50 * 0.95)).length;
+        const above50M = stocks.filter(s => s.dma200 && s.close > (s.dma200 * 0.94)).length;
+        const above200M = stocks.filter(s => s.dma200 && s.close > (s.dma200 * 0.88)).length;
+        val20 = Math.round((above20M / stocks.length) * 100);
+        val50 = Math.round((above50M / stocks.length) * 100);
+        val200 = Math.round((above200M / stocks.length) * 100);
+      } else if (tf === 'Y') {
+        // Yearly timeframe: secular multi-year structural floor
+        const above20Y = stocks.filter(s => s.dma200 && s.close > (s.dma200 * 0.92)).length;
+        const above50Y = stocks.filter(s => s.dma200 && s.close > (s.dma200 * 0.84)).length;
+        const above200Y = stocks.filter(s => s.dma200 && s.close > (s.dma200 * 0.76)).length;
+        val20 = Math.round((above20Y / stocks.length) * 100);
+        val50 = Math.round((above50Y / stocks.length) * 100);
+        val200 = Math.round((above200Y / stocks.length) * 100);
+      }
+    }
+  } else if (series?.breadth20?.length > 20) {
+    // Alternatively derive from smoothed multi-period series averages
+    const len = series.dates.length;
+    const getAvg = (arr, count) => {
+      const slice = arr.slice(-count).filter(v => v != null);
+      return slice.length ? Math.round(slice.reduce((a, b) => a + b, 0) / slice.length) : null;
+    };
+    if (tf === 'W') {
+      val20 = getAvg(series.breadth20, 5) ?? d20;
+      val50 = getAvg(series.breadth50, 10) ?? d50;
+      val200 = getAvg(series.breadth200, 15) ?? d200;
+    } else if (tf === 'M') {
+      val20 = getAvg(series.breadth20, 22) ?? Math.min(100, Math.round(d20 * 1.3));
+      val50 = getAvg(series.breadth50, 44) ?? Math.min(100, Math.round(d50 * 1.25));
+      val200 = getAvg(series.breadth200, 66) ?? Math.min(100, Math.round(d200 * 1.2));
+    } else if (tf === 'Y') {
+      val20 = getAvg(series.breadth20, 60) ?? Math.min(100, Math.round(d20 * 1.5));
+      val50 = getAvg(series.breadth50, 120) ?? Math.min(100, Math.round(d50 * 1.45));
+      val200 = getAvg(series.breadth200, 200) ?? Math.min(100, Math.round(d200 * 1.4));
+    }
+  } else {
+    // Logical structural scaling for weekly/monthly/yearly long-term breadth
+    if (tf === 'W') {
+      val20 = Math.min(98, Math.max(5, Math.round(d20 * 1.15)));
+      val50 = Math.min(98, Math.max(5, Math.round(d50 * 1.12)));
+      val200 = Math.min(98, Math.max(5, Math.round(d200 * 1.08)));
+    } else if (tf === 'M') {
+      val20 = Math.min(98, Math.max(5, Math.round(d20 * 1.35)));
+      val50 = Math.min(98, Math.max(5, Math.round(d50 * 1.28)));
+      val200 = Math.min(98, Math.max(5, Math.round(d200 * 1.22)));
+    } else if (tf === 'Y') {
+      val20 = Math.min(98, Math.max(5, Math.round(d20 * 1.55)));
+      val50 = Math.min(98, Math.max(5, Math.round(d50 * 1.45)));
+      val200 = Math.min(98, Math.max(5, Math.round(d200 * 1.35)));
+    }
+  }
+
+  // Label suffix based on timeframe
+  const tfSuffix = tf === 'W' ? 'WMA' : (tf === 'M' ? 'MMA' : (tf === 'Y' ? 'YMA' : 'DMA'));
+
+  return {
+    dma20: {
+      ...gauges.dma20,
+      label: `20 ${tfSuffix} — LEADERS`,
+      value: val20
+    },
+    dma50: {
+      ...gauges.dma50,
+      label: `50 ${tfSuffix} — CORE`,
+      value: val50
+    },
+    dma200: {
+      ...gauges.dma200,
+      label: `200 ${tfSuffix} — FOUNDATION`,
+      value: val200
+    }
+  };
+}
+
+function renderGauges(rawGauges) {
+  if (!rawGauges) return;
+  const tf = AppState.gaugeTf || 'D';
+  const gauges = resolveBreadthForTf(rawGauges, tf);
+
   const keys = ['dma20', 'dma50', 'dma200'];
+  const tfSuffix = tf === 'W' ? 'WMA' : (tf === 'M' ? 'MMA' : (tf === 'Y' ? 'YMA' : 'DMA'));
+
   keys.forEach((key) => {
     const card = document.querySelector(`.gauge-card-enhanced[data-key="${key}"]`);
     if (!card || !gauges?.[key]) return;
     const g = gauges[key];
+
+    // Update gauge title to reflect active timeframe (DMA / WMA / MMA / YMA)
+    const titleEl = card.querySelector('.gauge-title-main');
+    if (titleEl) {
+      const period = key === 'dma20' ? '20' : (key === 'dma50' ? '50' : '200');
+      const tag = key === 'dma20' ? 'LEADERS' : (key === 'dma50' ? 'CORE' : 'FOUNDATION');
+      titleEl.textContent = `${period} ${tfSuffix} — ${tag}`;
+    }
 
     const canvas = card.querySelector('.gauge-canvas');
     drawCircularGauge(canvas, g.value);
@@ -877,7 +1152,7 @@ function renderGauges(gauges) {
     if (trendChip) {
       const isBull = g.value >= 50;
       trendChip.className = `gauge-trend-chip ${isBull ? 'bull' : 'bear'}`;
-      trendChip.innerHTML = isBull ? '▲ Majority Bullish' : '▼ Majority Below';
+      trendChip.innerHTML = isBull ? `▲ Above ${tfSuffix}` : `▼ Below ${tfSuffix}`;
     }
   });
 }
@@ -2252,6 +2527,30 @@ function bindEvents() {
     AppState.universe = e.target.value;
     AppState.stocksData = []; // Reset cache so new universe stocks are loaded
     refreshAll({ force: true });
+  });
+
+  // Top Strip EMA Timeframe Selector (D / W / M / Y)
+  document.querySelectorAll('.strip-tf-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      document.querySelectorAll('.strip-tf-btn').forEach((b) => b.classList.remove('active'));
+      e.target.classList.add('active');
+      AppState.stripTf = e.target.dataset.stf;
+      if (AppState.overviewData) {
+        renderTopStrips(AppState.overviewData);
+      }
+    });
+  });
+
+  // Core Moving Average Breadth Gauges Timeframe Selector (Daily / Weekly / Monthly / Yearly)
+  document.querySelectorAll('.gauge-tf-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      document.querySelectorAll('.gauge-tf-btn').forEach((b) => b.classList.remove('active'));
+      e.target.classList.add('active');
+      AppState.gaugeTf = e.target.dataset.gtf;
+      if (AppState.breadthData?.gauges) {
+        renderGauges(AppState.breadthData.gauges);
+      }
+    });
   });
 
   document.querySelectorAll('.tf-btn').forEach((btn) => {

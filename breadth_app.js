@@ -587,7 +587,7 @@ function resolveIndexEMA(item, tf = 'D') {
       D: {
         ema20: { value: 24150.0, above: last >= 24150.0 },
         ema50: { value: 24320.0, above: last >= 24320.0 },
-        ema200: { value: 23680.0, above: last >= 23680.0 }
+        ema200: { value: 24050.0, above: last >= 24050.0 }
       },
       W: {
         ema20: { value: 23820.0, above: last >= 23820.0 },
@@ -1029,6 +1029,8 @@ function resolveBreadthForTf(gauges, tf = 'D') {
   let val50 = d50;
   let val200 = d200;
 
+  let calculated = false;
+
   if (stocks.length > 0) {
     // If stocks data loaded, calculate actual breadth or weighted projection
     const validStocks = stocks.filter(s => s.close != null && s.dma50 != null);
@@ -1058,41 +1060,46 @@ function resolveBreadthForTf(gauges, tf = 'D') {
         val50 = Math.round((above50Y / stocks.length) * 100);
         val200 = Math.round((above200Y / stocks.length) * 100);
       }
+      calculated = true;
     }
-  } else if (series?.breadth20?.length > 20) {
-    // Alternatively derive from smoothed multi-period series averages
-    const len = series.dates.length;
-    const getAvg = (arr, count) => {
-      const slice = arr.slice(-count).filter(v => v != null);
-      return slice.length ? Math.round(slice.reduce((a, b) => a + b, 0) / slice.length) : null;
-    };
-    if (tf === 'W') {
-      val20 = getAvg(series.breadth20, 5) ?? d20;
-      val50 = getAvg(series.breadth50, 10) ?? d50;
-      val200 = getAvg(series.breadth200, 15) ?? d200;
-    } else if (tf === 'M') {
-      val20 = getAvg(series.breadth20, 22) ?? Math.min(100, Math.round(d20 * 1.3));
-      val50 = getAvg(series.breadth50, 44) ?? Math.min(100, Math.round(d50 * 1.25));
-      val200 = getAvg(series.breadth200, 66) ?? Math.min(100, Math.round(d200 * 1.2));
-    } else if (tf === 'Y') {
-      val20 = getAvg(series.breadth20, 60) ?? Math.min(100, Math.round(d20 * 1.5));
-      val50 = getAvg(series.breadth50, 120) ?? Math.min(100, Math.round(d50 * 1.45));
-      val200 = getAvg(series.breadth200, 200) ?? Math.min(100, Math.round(d200 * 1.4));
-    }
-  } else {
-    // Logical structural scaling for weekly/monthly/yearly long-term breadth
-    if (tf === 'W') {
-      val20 = Math.min(98, Math.max(5, Math.round(d20 * 1.15)));
-      val50 = Math.min(98, Math.max(5, Math.round(d50 * 1.12)));
-      val200 = Math.min(98, Math.max(5, Math.round(d200 * 1.08)));
-    } else if (tf === 'M') {
-      val20 = Math.min(98, Math.max(5, Math.round(d20 * 1.35)));
-      val50 = Math.min(98, Math.max(5, Math.round(d50 * 1.28)));
-      val200 = Math.min(98, Math.max(5, Math.round(d200 * 1.22)));
-    } else if (tf === 'Y') {
-      val20 = Math.min(98, Math.max(5, Math.round(d20 * 1.55)));
-      val50 = Math.min(98, Math.max(5, Math.round(d50 * 1.45)));
-      val200 = Math.min(98, Math.max(5, Math.round(d200 * 1.35)));
+  }
+  
+  if (!calculated) {
+    if (series?.breadth20?.length > 20) {
+      // Alternatively derive from smoothed multi-period series averages
+      const len = series.dates.length;
+      const getAvg = (arr, count) => {
+        const slice = arr.slice(-count).filter(v => v != null);
+        return slice.length ? Math.round(slice.reduce((a, b) => a + b, 0) / slice.length) : null;
+      };
+      if (tf === 'W') {
+        val20 = getAvg(series.breadth20, 5) ?? d20;
+        val50 = getAvg(series.breadth50, 10) ?? d50;
+        val200 = getAvg(series.breadth200, 15) ?? d200;
+      } else if (tf === 'M') {
+        val20 = getAvg(series.breadth20, 22) ?? Math.min(100, Math.round(d20 * 1.3));
+        val50 = getAvg(series.breadth50, 44) ?? Math.min(100, Math.round(d50 * 1.25));
+        val200 = getAvg(series.breadth200, 66) ?? Math.min(100, Math.round(d200 * 1.2));
+      } else if (tf === 'Y') {
+        val20 = getAvg(series.breadth20, 60) ?? Math.min(100, Math.round(d20 * 1.5));
+        val50 = getAvg(series.breadth50, 120) ?? Math.min(100, Math.round(d50 * 1.45));
+        val200 = getAvg(series.breadth200, 200) ?? Math.min(100, Math.round(d200 * 1.4));
+      }
+    } else {
+      // Logical structural scaling for weekly/monthly/yearly long-term breadth
+      if (tf === 'W') {
+        val20 = Math.min(98, Math.max(5, Math.round(d20 * 1.15)));
+        val50 = Math.min(98, Math.max(5, Math.round(d50 * 1.12)));
+        val200 = Math.min(98, Math.max(5, Math.round(d200 * 1.08)));
+      } else if (tf === 'M') {
+        val20 = Math.min(98, Math.max(5, Math.round(d20 * 1.35)));
+        val50 = Math.min(98, Math.max(5, Math.round(d50 * 1.28)));
+        val200 = Math.min(98, Math.max(5, Math.round(d200 * 1.22)));
+      } else if (tf === 'Y') {
+        val20 = Math.min(98, Math.max(5, Math.round(d20 * 1.55)));
+        val50 = Math.min(98, Math.max(5, Math.round(d50 * 1.45)));
+        val200 = Math.min(98, Math.max(5, Math.round(d200 * 1.35)));
+      }
     }
   }
 

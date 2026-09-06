@@ -2601,5 +2601,39 @@ body {
   }
 }
 
+/* 5. Divergence Radar Badges */
+.div-badge {
+  display: inline-block;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.div-badge.bullish {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--bull-green);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+}
+.div-badge.bearish {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--bear-red);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+.div-badge.hidden-bullish {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6; /* bright blue */
+  border: 1px solid rgba(59, 130, 246, 0.4);
+}
+.div-badge.hidden-bearish {
+  background: rgba(249, 115, 22, 0.15);
+  color: #f97316; /* orange */
+  border: 1px solid rgba(249, 115, 22, 0.4);
+}
+.div-badge.none {
+  background: rgba(128, 128, 128, 0.1);
+  color: var(--text-muted);
+}
+
 
 

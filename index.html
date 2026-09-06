@@ -10,7 +10,7 @@
   <title>Market Breadth Intelligence Terminal | Professional Market Health Cockpit</title>
   
   <!-- CSS Stylesheets -->
-  <link rel="stylesheet" href="breadth_app.css?v=4" />
+  <link rel="stylesheet" href="breadth_app.css?v=5" />
   
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -456,7 +456,10 @@
         <!-- McClellan Proxy Oscillator -->
         <div class="oscillator-card">
           <div class="oscillator-head">
-            <h3 class="osc-title"><i data-lucide="activity"></i> McClellan Oscillator Proxy</h3>
+            <div style="display:flex; flex-direction:column; gap:0.25rem;">
+              <h3 class="osc-title"><i data-lucide="activity"></i> McClellan Oscillator Proxy</h3>
+              <span style="font-size: 0.65rem; color: var(--text-muted);">Logic: &gt; +20 is Overbought (Sell Bias). &lt; -20 is Oversold Capitulation (Buy Bias).</span>
+            </div>
             <span id="mcclellan-value" class="osc-value neutral">0.00</span>
           </div>
           <div class="osc-canvas-wrapper">
@@ -467,7 +470,10 @@
         <!-- TRIN Capitulation Gauge -->
         <div class="oscillator-card">
           <div class="oscillator-head">
-            <h3 class="osc-title"><i data-lucide="gauge"></i> TRIN (Arms Index) Proxy</h3>
+            <div style="display:flex; flex-direction:column; gap:0.25rem;">
+              <h3 class="osc-title"><i data-lucide="gauge"></i> TRIN (Arms Index) Proxy</h3>
+              <span style="font-size: 0.65rem; color: var(--text-muted);">Logic: &gt; 1.5 = Panic (Buy Dip). &lt; 0.5 = Euphoria (Take Profits).</span>
+            </div>
             <span id="trin-value" class="osc-value neutral">1.00</span>
           </div>
           <div class="trin-gauge-wrapper">
@@ -554,7 +560,7 @@
         <div class="sector-thrust-col">
           <div class="thrust-header">
             <h3><i data-lucide="zap"></i> Hot Money Thrust</h3>
-            <span class="thrust-subtitle">High-velocity institutional rotation</span>
+            <span class="thrust-subtitle">High-velocity institutional rotation.<br/>Logic: Detects capital flows where Sector gains &gt; 1.5% and majority hold 50 DMA.</span>
           </div>
           <div id="sector-thrust-feed" class="thrust-feed">
             <!-- Injected via JS -->
@@ -593,6 +599,7 @@
           <button class="filter-chip stock-filter-chip watchlist-chip" data-filter="watchlist" title="Show Pinned Favorites (Hotkey: W)">★ Watchlist (<span id="watchlist-count">0</span>)</button>
           <button class="filter-chip stock-filter-chip strategy-chip" data-filter="stratStage2" title=">20, 50, 200 DMA + Near 52W High + RS >= 80">🎯 Stage 2 Breakouts</button>
           <button class="filter-chip stock-filter-chip strategy-chip" data-filter="stratVCP" title="Volatility Contraction Pattern near Pivot">🌪️ VCP Pattern</button>
+          <button class="filter-chip stock-filter-chip strategy-chip" data-filter="stratDivergence" title="Multi-Timeframe RSI vs Price Divergences">🔍 Divergence Radar</button>
           <button class="filter-chip stock-filter-chip strategy-chip" data-filter="stratPocketPivot" title="Pocket Pivot Surge off 10/20 EMA">⚡ Pocket Pivot</button>
           <button class="filter-chip stock-filter-chip strategy-chip" data-filter="stratOversoldBounce" title="RSI <= 35 and > 200 DMA">⚡ Oversold Pullback</button>
           <button class="filter-chip stock-filter-chip" data-filter="volumeSurge">🔥 Volume Surge</button>
@@ -618,8 +625,11 @@
               <th style="width: 65px; text-align: center;">7D Trend</th>
               <th style="text-align: center;" title="Multi-Timeframe Trend Alignment [Daily | Weekly | Monthly]">MTF Matrix</th>
               <th data-sort="rsi" style="text-align: center;">RSI (14) ↕</th>
-              <th data-sort="volumeSurge" style="text-align: center;">Volume ↕</th>
-              <th data-sort="dma20" style="text-align: center;">20 DMA</th>
+              <th data-sort="changePct" title="Today's Performance">% Chg ↕</th>
+              <th id="div-1d-col" style="display:none; text-align:center;">1D Div</th>
+              <th id="div-1w-col" style="display:none; text-align:center;">1W Div</th>
+              <th id="div-1m-col" style="display:none; text-align:center;">1M Div</th>
+              <th data-sort="dma20" style="text-align: center;" title="Trend relative to short-term average">> 20 ↕</th>
               <th data-sort="dma50" style="text-align: center;">50 DMA</th>
               <th data-sort="dma200" style="text-align: center;">200 DMA</th>
               <th data-sort="high52Dist">From 52W High ↕</th>
@@ -1033,6 +1043,6 @@
   <div id="toast-container" class="toast-container"></div>
 
   <!-- App Logic Engine -->
-  <script src="breadth_app.js?v=4"></script>
+  <script src="breadth_app.js?v=5"></script>
 </body>
 </html>

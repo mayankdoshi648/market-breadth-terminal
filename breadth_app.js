@@ -1969,6 +1969,15 @@ function renderStockTable() {
   } else if (AppState.stockFilter === 'stratVCP') {
     // VCP: Near 52W High (within 8%), above 50 DMA, drying volume, RS >= 75
     stocks = stocks.filter((s) => s.dma50 && s.high52Dist >= -8.0 && (s.rsRating || 50) >= 75 && !s.volumeSurge);
+  } else if (AppState.stockFilter === 'stratDivergence') {
+    // Show stocks that have ANY divergence in any timeframe
+    stocks = stocks.filter((s) => 
+      s.divergence && (
+        s.divergence['1D'] !== 'None' || 
+        s.divergence['1W'] !== 'None' || 
+        s.divergence['1M'] !== 'None'
+      )
+    );
   } else if (AppState.stockFilter === 'stratPocketPivot') {
     // Pocket Pivot: Bouncing above 20 DMA with volume surge and RSI in sweet spot (45-68)
     stocks = stocks.filter((s) => s.dma20 && s.volumeSurge && (s.rsi || 50) >= 45 && (s.rsi || 50) <= 68);
@@ -2023,6 +2032,15 @@ function renderStockTable() {
     return;
   }
 
+  // Toggle column visibility
+  const showDiv = AppState.stockFilter === 'stratDivergence';
+  const c1d = document.getElementById('div-1d-col');
+  const c1w = document.getElementById('div-1w-col');
+  const c1m = document.getElementById('div-1m-col');
+  if (c1d) c1d.style.display = showDiv ? 'table-cell' : 'none';
+  if (c1w) c1w.style.display = showDiv ? 'table-cell' : 'none';
+  if (c1m) c1m.style.display = showDiv ? 'table-cell' : 'none';
+
   tbody.innerHTML = stocks.map((s) => {
     const chgCls = s.changePct >= 0 ? 'bull-green' : 'bear-red';
     const chgSign = s.changePct >= 0 ? '+' : '';
@@ -2067,11 +2085,18 @@ function renderStockTable() {
             <span class="mtf-seg ${mtfMonthly}">M</span>
           </div>
         </td>
+        </td>
         <td style="text-align: center;">
           <span class="rsi-pill ${rsiCls}">${rsiVal}</span>
         </td>
-        <td style="text-align: center;">
-          ${volBadge}
+        <td style="display:${showDiv ? 'table-cell' : 'none'}; text-align: center;">
+          <span class="div-badge ${s.divergence?.['1D'] ? s.divergence['1D'].replace(' ', '-').toLowerCase() : 'none'}">${s.divergence?.['1D'] || 'None'}</span>
+        </td>
+        <td style="display:${showDiv ? 'table-cell' : 'none'}; text-align: center;">
+          <span class="div-badge ${s.divergence?.['1W'] ? s.divergence['1W'].replace(' ', '-').toLowerCase() : 'none'}">${s.divergence?.['1W'] || 'None'}</span>
+        </td>
+        <td style="display:${showDiv ? 'table-cell' : 'none'}; text-align: center;">
+          <span class="div-badge ${s.divergence?.['1M'] ? s.divergence['1M'].replace(' ', '-').toLowerCase() : 'none'}">${s.divergence?.['1M'] || 'None'}</span>
         </td>
         <td style="text-align: center;">
           <span class="dma-status-badge ${s.dma20 ? 'pass' : 'fail'}">${s.dma20 ? '✓' : '✗'}</span>

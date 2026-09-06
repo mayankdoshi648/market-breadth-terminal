@@ -2375,6 +2375,231 @@ body {
   margin-top: 0.5rem;
 }
 
+/* ==========================================
+   ADVANCED INSTITUTIONAL QUANT LOGICS
+   ========================================== */
+
+/* 1. Risk Radar Badge */
+.risk-radar-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: 0.5rem;
+  border: 1px solid transparent;
+  animation: pulse-border 2s infinite;
+}
+.risk-radar-badge.safe {
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--bull-green);
+  border-color: rgba(34, 197, 94, 0.3);
+  animation: none;
+}
+.risk-radar-badge.warn {
+  background: rgba(234, 179, 8, 0.1);
+  color: #eab308;
+  border-color: rgba(234, 179, 8, 0.3);
+}
+.risk-radar-badge.danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--bear-red);
+  border-color: var(--bear-red);
+}
+
+@keyframes pulse-border {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  70% { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+/* 2. Quant Oscillators */
+.quant-oscillators-section {
+  margin: 1rem 0;
+}
+.oscillators-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.oscillator-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+.oscillator-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.osc-title {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.osc-value {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+.osc-value.bull { color: var(--bull-green); background: rgba(34,197,94,0.1); }
+.osc-value.bear { color: var(--bear-red); background: rgba(239,68,68,0.1); }
+.osc-value.neutral { color: var(--text-secondary); background: var(--bg-primary); }
+
+.osc-canvas-wrapper {
+  flex: 1;
+  min-height: 120px;
+  position: relative;
+}
+
+/* 3. TRIN Speedometer */
+.trin-gauge-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding-top: 1rem;
+}
+.trin-speedometer {
+  width: 200px;
+  height: 100px;
+  position: relative;
+  overflow: hidden;
+  border-bottom: 2px solid var(--border-subtle);
+}
+.trin-zones {
+  position: absolute;
+  top: 0; left: 0;
+  width: 200px; height: 200px;
+  border-radius: 50%;
+  border: 15px solid transparent;
+  /* Green -> Neutral -> Red arc */
+  border-top-color: var(--bear-red);
+  border-right-color: var(--border-subtle);
+  border-left-color: var(--bull-green);
+  transform: rotate(45deg);
+  box-sizing: border-box;
+}
+.trin-needle {
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  width: 4px;
+  height: 90px;
+  background: var(--text-primary);
+  transform-origin: bottom center;
+  transform: translateX(-50%) rotate(0deg);
+  border-radius: 4px;
+  transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 2;
+}
+.trin-needle::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: -4px;
+  width: 12px; height: 12px;
+  background: var(--bg-card);
+  border: 2px solid var(--text-primary);
+  border-radius: 50%;
+}
+.trin-labels {
+  display: flex;
+  justify-content: space-between;
+  width: 220px;
+  margin-top: 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* 4. Sector Thrust Feed */
+.sector-layout-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+}
+.sector-thrust-col {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+}
+.thrust-header h3 {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.25rem;
+}
+.thrust-subtitle {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+.thrust-feed {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.thrust-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem;
+  background: rgba(34, 197, 94, 0.05);
+  border-left: 3px solid var(--bull-green);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+.thrust-icon {
+  color: var(--bull-green);
+}
+.thrust-details {
+  display: flex;
+  flex-direction: column;
+}
+.thrust-name {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.thrust-meta {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+}
+.empty-thrust {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding: 1rem;
+  text-align: center;
+  background: var(--bg-primary);
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border-subtle);
+}
+
+@media (max-width: 992px) {
+  .oscillators-grid {
+    grid-template-columns: 1fr;
+  }
+  .sector-layout-grid {
+    grid-template-columns: 1fr;
+  }
+}
 
 
 

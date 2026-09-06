@@ -10,7 +10,7 @@
   <title>Market Breadth Intelligence Terminal | Professional Market Health Cockpit</title>
   
   <!-- CSS Stylesheets -->
-  <link rel="stylesheet" href="breadth_app.css?v=3" />
+  <link rel="stylesheet" href="breadth_app.css?v=4" />
   
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -33,6 +33,10 @@
         <div class="brand-title">MARKET BREADTH</div>
       </div>
       <span class="brand-badge">PRO COCKPIT</span>
+      <div id="systemic-risk-radar" class="risk-radar-badge safe" title="Hindenburg Omen / Systemic Risk Monitor">
+        <i data-lucide="shield-check"></i>
+        <span id="risk-radar-text">Risk: NORMAL</span>
+      </div>
     </div>
 
     <div class="header-controls">
@@ -438,6 +442,53 @@
       </div>
     </section>
 
+    <!-- Quantitative Oscillators Section (McClellan & TRIN) -->
+    <section class="quant-oscillators-section">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">
+            <i data-lucide="activity"></i> Quantitative Market Oscillators
+          </h2>
+          <span class="section-subtitle">Real-time internal momentum and capitulation metrics</span>
+        </div>
+      </div>
+      <div class="oscillators-grid">
+        <!-- McClellan Proxy Oscillator -->
+        <div class="oscillator-card">
+          <div class="oscillator-head">
+            <h3 class="osc-title"><i data-lucide="activity"></i> McClellan Oscillator Proxy</h3>
+            <span id="mcclellan-value" class="osc-value neutral">0.00</span>
+          </div>
+          <div class="osc-canvas-wrapper">
+            <canvas id="mcclellan-chart-canvas"></canvas>
+          </div>
+        </div>
+        
+        <!-- TRIN Capitulation Gauge -->
+        <div class="oscillator-card">
+          <div class="oscillator-head">
+            <h3 class="osc-title"><i data-lucide="gauge"></i> TRIN (Arms Index) Proxy</h3>
+            <span id="trin-value" class="osc-value neutral">1.00</span>
+          </div>
+          <div class="trin-gauge-wrapper">
+            <div id="trin-speedometer" class="trin-speedometer">
+              <div class="trin-needle" id="trin-needle"></div>
+              <div class="trin-zones">
+                <div class="trin-zone overbought" title="< 0.5: Euphoria / Overbought"></div>
+                <div class="trin-zone neutral" title="0.5 - 1.5: Normal"></div>
+                <div class="trin-zone oversold" title="> 1.5: Capitulation / Oversold"></div>
+              </div>
+            </div>
+            <div class="trin-labels">
+              <span>Euphoria</span>
+              <span>Neutral</span>
+              <span>Panic</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Sector Radar & Matrix -->
     <section class="sector-matrix-section">
       <div class="section-head">
@@ -463,10 +514,12 @@
         </div>
       </div>
 
-      <!-- Card View -->
-      <div id="sector-grid-container" class="sector-grid-enhanced">
-        <!-- Populated via breadth_app.js -->
-      </div>
+      <div class="sector-layout-grid">
+        <div class="sector-matrix-col">
+          <!-- Card View -->
+          <div id="sector-grid-container" class="sector-grid-enhanced">
+            <!-- Populated via breadth_app.js -->
+          </div>
 
       <!-- Heatmap View -->
       <div id="sector-heatmap-container" class="sector-heatmap-wrapper hidden">
@@ -491,9 +544,25 @@
           <span class="mono text-muted">Benchmark: Nifty 50</span>
         </div>
         <div class="rrg-canvas-wrapper">
-          <canvas id="rrg-canvas"></canvas>
+            <canvas id="rrg-canvas"></canvas>
+          </div>
         </div>
-      </div>
+        
+        </div> <!-- End sector-matrix-col -->
+
+        <!-- Right: Sector Thrust Panel -->
+        <div class="sector-thrust-col">
+          <div class="thrust-header">
+            <h3><i data-lucide="zap"></i> Hot Money Thrust</h3>
+            <span class="thrust-subtitle">High-velocity institutional rotation</span>
+          </div>
+          <div id="sector-thrust-feed" class="thrust-feed">
+            <!-- Injected via JS -->
+            <div class="empty-thrust">Waiting for systemic rotation data...</div>
+          </div>
+        </div>
+
+      </div> <!-- End sector-layout-grid -->
     </section>
 
     <!-- Stock-Level Internal Scanner & Inspector -->
@@ -964,6 +1033,6 @@
   <div id="toast-container" class="toast-container"></div>
 
   <!-- App Logic Engine -->
-  <script src="breadth_app.js?v=3"></script>
+  <script src="breadth_app.js?v=4"></script>
 </body>
 </html>

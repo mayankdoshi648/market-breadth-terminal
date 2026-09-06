@@ -2104,6 +2104,197 @@ function renderStockTable() {
 }
 
 // ==========================================
+// 10.5 ADVANCED INSTITUTIONAL QUANT LOGICS
+// ==========================================
+
+function runAdvancedQuantLogics() {
+  const stocks = AppState.stocksData || [];
+  const series = AppState.breadthData?.series;
+  const sectors = AppState.overviewData?.sectors || [];
+  
+  detectSystemicRisk(stocks);
+  detectAdvancedDivergence(series);
+  calcAndRenderMcClellanProxy(series);
+  calcAndRenderTRINProxy(stocks);
+  renderSectorThrust(sectors);
+}
+
+function detectSystemicRisk(stocks) {
+  const radarBadge = document.getElementById('systemic-risk-radar');
+  if (!radarBadge || stocks.length === 0) return;
+  
+  // Hindenburg Omen Proxy: New 52w Highs > 2.2% AND New 52w Lows > 2.2%
+  const newHighs = stocks.filter(s => s.high52Dist >= -2.0).length;
+  const newLows = stocks.filter(s => s.high52Dist <= -40.0).length;
+  const pctHighs = (newHighs / stocks.length) * 100;
+  const pctLows = (newLows / stocks.length) * 100;
+  
+  if (pctHighs >= 2.2 && pctLows >= 2.2) {
+    radarBadge.className = 'risk-radar-badge danger';
+    radarBadge.innerHTML = `<i data-lucide="alert-octagon"></i><span id="risk-radar-text">Risk: HINDENBURG OMEN (FRACTURED)</span>`;
+  } else if (pctLows >= 5.0) {
+    radarBadge.className = 'risk-radar-badge warn';
+    radarBadge.innerHTML = `<i data-lucide="alert-triangle"></i><span id="risk-radar-text">Risk: ELEVATED (DOWNTREND)</span>`;
+  } else {
+    radarBadge.className = 'risk-radar-badge safe';
+    radarBadge.innerHTML = `<i data-lucide="shield-check"></i><span id="risk-radar-text">Risk: NORMAL</span>`;
+  }
+}
+
+function detectAdvancedDivergence(series) {
+  const banner = document.getElementById('divergence-banner');
+  if (!banner || !series?.index || series.index.length < 20) return;
+
+  const len = series.index.length;
+  const idxNow = series.index[len - 1];
+  const idx20Ago = series.index[len - 20];
+  const b50Now = series.breadth50[len - 1];
+  const b5020Ago = series.breadth50[len - 20];
+
+  if (idxNow > idx20Ago * 1.01 && b50Now < b5020Ago - 8) {
+    banner.className = 'divergence-banner bearish show';
+    banner.innerHTML = `
+      <div class="div-icon"><i data-lucide="alert-triangle"></i></div>
+      <div class="div-text">
+        <strong>Bearish Divergence (Systemic Distribution):</strong> Index is making higher highs while underlying breadth (% > 50 DMA) dropped from ${b5020Ago.toFixed(1)}% to ${b50Now.toFixed(1)}%.
+      </div>
+    `;
+  } else if (idxNow < idx20Ago * 0.99 && b50Now > b5020Ago + 8) {
+    banner.className = 'divergence-banner bullish show';
+    banner.innerHTML = `
+      <div class="div-icon"><i data-lucide="sparkles"></i></div>
+      <div class="div-text">
+        <strong>Bullish Divergence (Accumulation):</strong> Index is making lower lows while underlying breadth improved from ${b5020Ago.toFixed(1)}% to ${b50Now.toFixed(1)}%. Selling pressure is exhausted.
+      </div>
+    `;
+  } else {
+    banner.className = 'divergence-banner';
+    banner.innerHTML = '';
+  }
+}
+
+let mcclellanChart = null;
+function calcAndRenderMcClellanProxy(series) {
+  const canvas = document.getElementById('mcclellan-chart-canvas');
+  const valEl = document.getElementById('mcclellan-value');
+  if (!canvas || !series?.breadth20 || series.breadth20.length < 10) return;
+  
+  const spreadSeries = [];
+  const labels = [];
+  for(let i=0; i<series.dates.length; i++) {
+    const b20 = series.breadth20[i];
+    const b50 = series.breadth50[i];
+    if (b20 == null || b50 == null) continue;
+    const val = (b20 - b50) * 2; 
+    spreadSeries.push(val);
+    labels.push(series.dates[i].slice(5));
+  }
+  
+  if (spreadSeries.length === 0) return;
+  
+  const smooth = [];
+  for(let i=0; i<spreadSeries.length; i++) {
+    if (i < 3) smooth.push(spreadSeries[i]);
+    else smooth.push((spreadSeries[i] + spreadSeries[i-1] + spreadSeries[i-2]) / 3);
+  }
+  
+  const currentVal = smooth[smooth.length - 1];
+  if (valEl) {
+    valEl.textContent = (currentVal > 0 ? '+' : '') + currentVal.toFixed(1);
+    valEl.className = 'osc-value ' + (currentVal > 20 ? 'bull' : (currentVal < -20 ? 'bear' : 'neutral'));
+  }
+
+  const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+  
+  if (mcclellanChart) {
+    mcclellanChart.data.labels = labels.slice(-60);
+    mcclellanChart.data.datasets[0].data = smooth.slice(-60);
+    mcclellanChart.update();
+  } else {
+    mcclellanChart = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: labels.slice(-60),
+        datasets: [{
+          label: 'McClellan Proxy',
+          data: smooth.slice(-60),
+          backgroundColor: (ctx) => {
+            const v = ctx.raw;
+            return v >= 0 ? 'rgba(34, 197, 94, 0.6)' : 'rgba(239, 68, 68, 0.6)';
+          }
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { display: false },
+          y: { 
+            grid: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
+            suggestedMin: -50, suggestedMax: 50
+          }
+        }
+      }
+    });
+  }
+}
+
+function calcAndRenderTRINProxy(stocks) {
+  const valEl = document.getElementById('trin-value');
+  const needle = document.getElementById('trin-needle');
+  if (!valEl || !needle || stocks.length === 0) return;
+  
+  const adv = stocks.filter(s => s.changePct > 0);
+  const dec = stocks.filter(s => s.changePct < 0);
+  
+  let dLen = dec.length;
+  if (dLen === 0) dLen = 1;
+  const adRatio = adv.length / dLen;
+  
+  let advVolSurge = adv.filter(s => s.volumeSurge).length || 1;
+  let decVolSurge = dec.filter(s => s.volumeSurge).length || 1;
+  const volRatio = advVolSurge / decVolSurge;
+  
+  const trinProxy = adRatio / volRatio;
+  const clampedTrin = Math.min(3.0, Math.max(0.1, trinProxy));
+  
+  valEl.textContent = clampedTrin.toFixed(2);
+  valEl.className = 'osc-value ' + (clampedTrin < 0.5 ? 'bear' : (clampedTrin > 1.5 ? 'bull' : 'neutral')); 
+  
+  let rot = 0;
+  if (clampedTrin <= 1.0) {
+    rot = -90 + (clampedTrin / 1.0) * 90; 
+  } else {
+    rot = ((clampedTrin - 1.0) / 1.0) * 90;
+    if (rot > 90) rot = 90;
+  }
+  needle.style.transform = `translateX(-50%) rotate(${rot}deg)`;
+}
+
+function renderSectorThrust(sectors) {
+  const feed = document.getElementById('sector-thrust-feed');
+  if (!feed || !sectors || sectors.length === 0) return;
+  
+  const hotSectors = sectors.filter(s => s.changePct > 1.5 && (s.metrics?.dma50 || 0) > 50);
+  
+  if (hotSectors.length === 0) {
+    feed.innerHTML = '<div class="empty-thrust">No high-velocity systemic rotation detected today.</div>';
+    return;
+  }
+  
+  feed.innerHTML = hotSectors.map(s => `
+    <div class="thrust-item">
+      <div class="thrust-icon"><i data-lucide="flame"></i></div>
+      <div class="thrust-details">
+        <span class="thrust-name">${escapeHtml(s.name)}</span>
+        <span class="thrust-meta">Up ${s.changePct.toFixed(2)}% &bull; ${s.metrics.dma50}% > 50 DMA</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ==========================================
 // 11. REFRESH & TIMING ENGINE
 // ==========================================
 async function refreshAll({ force = false } = {}) {
@@ -2144,6 +2335,7 @@ async function refreshAll({ force = false } = {}) {
     renderSectors(overview.sectors);
     renderStockTable();
     checkBreadthCrossings(breadth.gauges);
+    runAdvancedQuantLogics();
 
     if (pulseEl) pulseEl.className = 'pulse-dot';
     if (statusEl) {

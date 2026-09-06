@@ -10,7 +10,7 @@
   <title>Market Breadth Intelligence Terminal | Professional Market Health Cockpit</title>
   
   <!-- CSS Stylesheets -->
-  <link rel="stylesheet" href="breadth_app.css?v=5" />
+  <link rel="stylesheet" href="breadth_app.css?v=6" />
   
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -625,13 +625,13 @@
               <th style="width: 65px; text-align: center;">7D Trend</th>
               <th style="text-align: center;" title="Multi-Timeframe Trend Alignment [Daily | Weekly | Monthly]">MTF Matrix</th>
               <th data-sort="rsi" style="text-align: center;">RSI (14) ↕</th>
-              <th data-sort="changePct" title="Today's Performance">% Chg ↕</th>
               <th id="div-1d-col" style="display:none; text-align:center;">1D Div</th>
               <th id="div-1w-col" style="display:none; text-align:center;">1W Div</th>
               <th id="div-1m-col" style="display:none; text-align:center;">1M Div</th>
-              <th data-sort="dma20" style="text-align: center;" title="Trend relative to short-term average">> 20 ↕</th>
-              <th data-sort="dma50" style="text-align: center;">50 DMA</th>
-              <th data-sort="dma200" style="text-align: center;">200 DMA</th>
+              <th data-sort="volumeSurge" style="text-align: center;">Volume ↕</th>
+              <th data-sort="dma20" style="text-align: center;" title="Price > 20 DMA">20 DMA ↕</th>
+              <th data-sort="dma50" style="text-align: center;" title="Price > 50 DMA">50 DMA ↕</th>
+              <th data-sort="dma200" style="text-align: center;" title="Price > 200 DMA">200 DMA ↕</th>
               <th data-sort="high52Dist">From 52W High ↕</th>
               <th data-sort="rsRating">RS Score ↕</th>
               <th style="text-align: center;">Action</th>
@@ -1043,6 +1043,6 @@
   <div id="toast-container" class="toast-container"></div>
 
   <!-- App Logic Engine -->
-  <script src="breadth_app.js?v=5"></script>
+  <script src="breadth_app.js?v=6"></script>
 </body>
 </html>

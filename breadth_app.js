@@ -317,39 +317,76 @@ function toggleTheme() {
 async function fetchStocksData(universe = 'nifty500') {
   try {
     const resp = await fetch(`/api/stocks?universe=${universe}`);
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const data = await resp.json();
-    return data.stocks || [];
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data.stocks && data.stocks.length > 0) return data.stocks;
+    }
   } catch (err) {
-    console.warn('[Stocks] Could not load from API, using empty list:', err);
-    return [];
+    console.debug('[Stocks] Live API unavailable, trying static nifty500_stocks.json');
   }
+
+  // Static hosting fallback (GitHub Pages / CDN)
+  try {
+    const staticResp = await fetch('nifty500_stocks.json');
+    if (staticResp.ok) {
+      const allStocks = await staticResp.json();
+      if (universe === 'nifty50') {
+        return allStocks.slice(0, 50);
+      }
+      return allStocks;
+    }
+  } catch (e) {
+    console.warn('[Stocks] Could not load static nifty500_stocks.json:', e);
+  }
+  return [];
 }
 
 async function fetchOverviewData(force = false) {
   try {
     const url = force ? '/api/overview?refresh=1' : '/api/overview';
     const resp = await fetch(url);
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const data = await resp.json();
-    if (data.error) throw new Error(data.error);
-    return data;
+    if (resp.ok) {
+      const data = await resp.json();
+      if (!data.error) return data;
+    }
   } catch (err) {
-    return generateFallbackOverview();
+    console.debug('[Overview] Live API unavailable, checking static api_overview.json');
   }
+
+  // Static hosting fallback
+  try {
+    const staticResp = await fetch('api_overview.json');
+    if (staticResp.ok) {
+      return await staticResp.json();
+    }
+  } catch (e) {}
+
+  return generateFallbackOverview();
 }
 
 async function fetchBreadthData(universe = 'nifty50', force = false) {
   try {
     const url = force ? `/api/breadth?universe=${universe}&refresh=1` : `/api/breadth?universe=${universe}`;
     const resp = await fetch(url);
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const data = await resp.json();
-    if (data.error) throw new Error(data.error);
-    return data;
+    if (resp.ok) {
+      const data = await resp.json();
+      if (!data.error) return data;
+    }
   } catch (err) {
-    return generateFallbackBreadth(universe);
+    console.debug('[Breadth] Live API unavailable, checking static api_breadth.json');
   }
+
+  // Static hosting fallback
+  try {
+    const staticResp = await fetch('api_breadth.json');
+    if (staticResp.ok) {
+      const bData = await staticResp.json();
+      if (bData[universe]) return bData[universe];
+      return bData;
+    }
+  } catch (e) {}
+
+  return generateFallbackBreadth(universe);
 }
 
 function generateFallbackOverview() {

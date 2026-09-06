@@ -365,6 +365,9 @@ function toggleTheme() {
   if (AppState.breadthData?.gauges) {
     renderGauges(AppState.breadthData.gauges);
   }
+  if (AppState.sectorViewMode === 'rrg' && AppState.overviewData?.sectors) {
+    renderSectorRRG(AppState.overviewData.sectors);
+  }
 }
 
 // ==========================================
@@ -1152,14 +1155,17 @@ function renderSectors(sectors) {
 
 function renderSectorRRG(sectors) {
   const canvas = $('rrg-canvas');
-  if (!canvas || !sectors || sectors.length === 0) return;
+  if (!canvas) return;
+
+  const list = (sectors && sectors.length > 0) ? sectors : (AppState.overviewData?.sectors || []);
+  if (list.length === 0) return;
 
   const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
   const textColor = isDark ? '#94a3b8' : '#475569';
   const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)';
 
   // Build simulated RS-Ratio (trend) and RS-Momentum coordinates relative to benchmark
-  const rrgData = sectors.map((s, idx) => {
+  const rrgData = list.map((s, idx) => {
     // RS-Ratio: centered at 100
     const ratio = 100 + (s.changePct || 0) * 4 + ((s.ema?.bias === 'bullish' ? 3 : (s.ema?.bias === 'bearish' ? -3 : 0)));
     // RS-Momentum: centered at 100
@@ -1178,7 +1184,14 @@ function renderSectorRRG(sectors) {
     };
   });
 
-  if (AppState.rrgChart) AppState.rrgChart.destroy();
+  if (AppState.rrgChart) {
+    try {
+      AppState.rrgChart.destroy();
+    } catch (e) {
+      console.debug('RRG destroy notice:', e);
+    }
+    AppState.rrgChart = null;
+  }
 
   const ctx = canvas.getContext('2d');
   AppState.rrgChart = new Chart(ctx, {
@@ -1257,6 +1270,17 @@ function renderSectorRRG(sectors) {
         ctx.fillStyle = '#06b6d4';
         ctx.fillText('IMPROVING', chartArea.left + 12, chartArea.top + 18);
 
+        // Draw sector name tag next to each point
+        ctx.font = '10px monospace';
+        ctx.fillStyle = isDark ? '#cbd5e1' : '#334155';
+        rrgData.forEach((item) => {
+          const px = scales.x.getPixelForValue(item.x);
+          const py = scales.y.getPixelForValue(item.y);
+          if (px != null && py != null && !isNaN(px) && !isNaN(py)) {
+            ctx.fillText(item.label, px + 10, py + 3);
+          }
+        });
+
         ctx.restore();
       }
     }]
@@ -1289,9 +1313,9 @@ function toggleSectorView(mode) {
   } else if (mode === 'rrg') {
     rrgBtn?.classList.add('active');
     rrgContainer?.classList.remove('hidden');
-    if (AppState.overviewData?.sectors) {
-      renderSectorRRG(AppState.overviewData.sectors);
-    }
+    setTimeout(() => {
+      renderSectorRRG(AppState.overviewData?.sectors);
+    }, 40);
   } else {
     cardsBtn?.classList.add('active');
     cardsContainer?.classList.remove('hidden');
@@ -2222,6 +2246,7 @@ function bindEvents() {
   // Sector view toggle
   $('sector-view-cards-btn')?.addEventListener('click', () => toggleSectorView('cards'));
   $('sector-view-heatmap-btn')?.addEventListener('click', () => toggleSectorView('heatmap'));
+  $('sector-view-rrg-btn')?.addEventListener('click', () => toggleSectorView('rrg'));
 
   $('universe-select')?.addEventListener('change', (e) => {
     AppState.universe = e.target.value;

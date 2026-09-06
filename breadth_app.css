@@ -205,6 +205,13 @@ body {
   flex-wrap: wrap;
 }
 
+.action-buttons-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
 /* Control Elements */
 .select-input, .btn-action {
   background: var(--bg-surface);
@@ -1682,6 +1689,27 @@ body {
     grid-template-columns: 1fr 1fr;
     gap: 0.5rem;
     width: 100%;
+  }
+
+  .action-buttons-row {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    width: 100%;
+    padding-bottom: 0.25rem;
+    gap: 0.5rem;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+
+  .action-buttons-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .action-buttons-row .btn-action {
+    flex: 0 0 auto;
+    width: auto;
   }
 
   .select-input, .btn-action, .kotak-status-pill {

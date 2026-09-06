@@ -1,1 +1,515 @@
-﻿{"scannedAt":"2026-09-05T17:22:21.471Z","source":"kotak-neo+yahoo","quoteSource":"kotak-neo","emaSource":"yahoo","kotak":{"configured":true,"quotesReady":true,"loginReady":false,"provider":"kotak-neo"},"warnings":[],"headline":[{"id":"nifty50","label":"Nifty 50","subtitle":null,"last":23897.7,"change":24.25,"changePct":0.1,"direction":"up","arrow":"Γû▓"},{"id":"bankNifty","label":"Bank Nifty","subtitle":null,"last":57369.65,"change":-10.95,"changePct":-0.02,"direction":"down","arrow":"Γû╝"},{"id":"indiaVix","label":"India VIX","subtitle":null,"last":10.68,"change":-0.66,"changePct":-5.82,"direction":"down","arrow":"Γû╝"}],"size":[{"id":"largeCap","label":"Large Cap","subtitle":"Nifty 100","last":25023.15,"change":9.7,"changePct":0.04,"direction":"up","arrow":"Γû▓","ema":{"ema20":{"value":25279.92,"above":false,"period":20},"ema50":{"value":25250.96,"above":false,"period":50},"ema200":{"value":25483.76,"above":false,"period":200},"score":0,"bias":"bearish"}},{"id":"midCap","label":"Mid Cap","subtitle":"Nifty Midcap 150","last":23168.35,"change":-52.15,"changePct":-0.22,"direction":"down","arrow":"Γû╝","ema":{"ema20":{"value":73675.59,"above":false,"period":20},"ema50":{"value":73080.79,"above":false,"period":50},"ema200":{"value":70510.68,"above":true,"period":200},"score":1,"bias":"mixed"}},{"id":"smallCap","label":"Small Cap","subtitle":"Nifty Smallcap 250","last":18481.4,"change":36.45,"changePct":0.2,"direction":"up","arrow":"Γû▓","ema":null}],"sectors":[{"id":"it","label":"IT","subtitle":null,"last":30695.1,"change":-143.75,"changePct":-0.47,"direction":"down","arrow":"Γû╝","ema":{"ema20":{"value":30787.71,"above":false,"period":20},"ema50":{"value":30229.18,"above":true,"period":50},"ema200":{"value":32197.65,"above":false,"period":200},"score":1,"bias":"mixed"}},{"id":"bank","label":"Bank","subtitle":null,"last":57369.65,"change":-10.95,"changePct":-0.02,"direction":"down","arrow":"Γû╝","ema":{"ema20":{"value":57505.18,"above":false,"period":20},"ema50":{"value":57316.92,"above":true,"period":50},"ema200":{"value":57303.37,"above":true,"period":200},"score":2,"bias":"bullish"}},{"id":"fin","label":"Financial Services","subtitle":null,"last":26051,"change":127.95,"changePct":0.49,"direction":"up","arrow":"Γû▓","ema":null},{"id":"auto","label":"Auto","subtitle":null,"last":27710.9,"change":-126.5,"changePct":-0.45,"direction":"down","arrow":"Γû╝","ema":{"ema20":{"value":26766.73,"above":true,"period":20},"ema50":{"value":26559.54,"above":true,"period":50},"ema200":{"value":26848.23,"above":true,"period":200},"score":3,"bias":"bullish"}},{"id":"pharma","label":"Pharma","subtitle":null,"last":26478.1,"change":-180.55,"changePct":-0.68,"direction":"down","arrow":"Γû╝","ema":{"ema20":{"value":26587.96,"above":false,"period":20},"ema50":{"value":26093.28,"above":true,"period":50},"ema200":{"value":24140.14,"above":true,"period":200},"score":2,"bias":"bullish"}},{"id":"fmcg","label":"FMCG","subtitle":null,"last":45892.75,"change":-62.9,"changePct":-0.14,"direction":"down","arrow":"Γû╝","ema":{"ema20":{"value":49113.49,"above":false,"period":20},"ema50":{"value":49378.27,"above":false,"period":50},"ema200":{"value":51938.78,"above":false,"period":200},"score":0,"bias":"bearish"}},{"id":"metal","label":"Metal","subtitle":null,"last":13317.45,"change":141.4,"changePct":1.07,"direction":"up","arrow":"Γû▓","ema":{"ema20":{"value":12637.89,"above":false,"period":20},"ema50":{"value":12717.24,"above":false,"period":50},"ema200":{"value":11615.82,"above":true,"period":200},"score":1,"bias":"mixed"}},{"id":"energy","label":"Energy","subtitle":null,"last":38067.85,"change":-72.95,"changePct":-0.19,"direction":"down","arrow":"Γû╝","ema":{"ema20":{"value":39445.34,"above":false,"period":20},"ema50":{"value":39416.8,"above":false,"period":50},"ema200":{"value":36999.56,"above":true,"period":200},"score":1,"bias":"mixed"}},{"id":"realty","label":"Realty","subtitle":null,"last":907.9,"change":-8.25,"changePct":-0.9,"direction":"down","arrow":"Γû╝","ema":{"ema20":{"value":879.3,"above":true,"period":20},"ema50":{"value":835.15,"above":true,"period":50},"ema200":{"value":841.55,"above":true,"period":200},"score":3,"bias":"bullish"}},{"id":"media","label":"Media","subtitle":null,"last":1565.45,"change":4.7,"changePct":0.3,"direction":"up","arrow":"Γû▓","ema":{"ema20":{"value":1498.28,"above":true,"period":20},"ema50":{"value":1472.28,"above":true,"period":50},"ema200":{"value":1457.9,"above":true,"period":200},"score":3,"bias":"bullish"}},{"id":"psuBank","label":"PSU Bank","subtitle":null,"last":8514.85,"change":-37.75,"changePct":-0.44,"direction":"down","arrow":"Γû╝","ema":{"ema20":{"value":8399.69,"above":false,"period":20},"ema50":{"value":8429.42,"above":false,"period":50},"ema200":{"value":8388.1,"above":false,"period":200},"score":0,"bias":"bearish"}},{"id":"privateBank","label":"Private Bank","subtitle":null,"last":27824.5,"change":76.65,"changePct":0.28,"direction":"up","arrow":"Γû▓","ema":null},{"id":"infra","label":"Infra","subtitle":null,"last":9197.8,"change":-6.4,"changePct":-0.07,"direction":"down","arrow":"Γû╝","ema":{"ema20":{"value":9378.93,"above":false,"period":20},"ema50":{"value":9347.02,"above":true,"period":50},"ema200":{"value":9326.17,"above":true,"period":200},"score":2,"bias":"bullish"}},{"id":"healthcare","label":"Healthcare","subtitle":null,"last":16408.05,"change":-144.15,"changePct":-0.87,"direction":"down","arrow":"Γû╝","ema":null},{"id":"consumerDurables","label":"Consumer Durables","subtitle":null,"last":39483.8,"change":-168.9,"changePct":-0.43,"direction":"down","arrow":"Γû╝","ema":null},{"id":"oilGas","label":"Oil & Gas","subtitle":null,"last":11187.65,"change":23,"changePct":0.21,"direction":"up","arrow":"Γû▓","ema":null},{"id":"chemicals","label":"Chemicals","subtitle":null,"last":30101.8,"change":-220.65,"changePct":-0.73,"direction":"down","arrow":"Γû╝","ema":null}],"fromCache":true,"refreshing":true,"stale":true}
+{
+  "scannedAt": "2026-09-05T17:22:21.471Z",
+  "source": "kotak-neo+yahoo",
+  "quoteSource": "kotak-neo",
+  "emaSource": "yahoo",
+  "kotak": {
+    "configured": true,
+    "quotesReady": true,
+    "loginReady": false,
+    "provider": "kotak-neo"
+  },
+  "warnings": [],
+  "headline": [
+    {
+      "id": "nifty50",
+      "label": "Nifty 50",
+      "subtitle": null,
+      "last": 23897.7,
+      "change": 24.25,
+      "changePct": 0.1,
+      "direction": "up",
+      "arrow": "\u0393\u00fb\u2593"
+    },
+    {
+      "id": "bankNifty",
+      "label": "Bank Nifty",
+      "subtitle": null,
+      "last": 57369.65,
+      "change": -10.95,
+      "changePct": -0.02,
+      "direction": "down",
+      "arrow": "\u0393\u00fb\u255d"
+    },
+    {
+      "id": "indiaVix",
+      "label": "India VIX",
+      "subtitle": null,
+      "last": 10.68,
+      "change": -0.66,
+      "changePct": -5.82,
+      "direction": "down",
+      "arrow": "\u0393\u00fb\u255d"
+    }
+  ],
+  "size": [
+    {
+      "id": "largeCap",
+      "label": "Large Cap",
+      "subtitle": "Nifty 100",
+      "last": 25023.15,
+      "change": 9.7,
+      "changePct": 0.04,
+      "direction": "up",
+      "arrow": "\u0393\u00fb\u2593",
+      "ema": {
+        "ema20": {
+          "value": 25279.92,
+          "above": false,
+          "period": 20
+        },
+        "ema50": {
+          "value": 25250.96,
+          "above": false,
+          "period": 50
+        },
+        "ema200": {
+          "value": 25483.76,
+          "above": false,
+          "period": 200
+        },
+        "score": 0,
+        "bias": "bearish"
+      }
+    },
+    {
+      "id": "midCap",
+      "label": "Mid Cap",
+      "subtitle": "Nifty Midcap 150",
+      "last": 23168.35,
+      "change": -52.15,
+      "changePct": -0.22,
+      "direction": "down",
+      "arrow": "\u0393\u00fb\u255d",
+      "ema": {
+        "ema20": {
+          "value": 73675.59,
+          "above": false,
+          "period": 20
+        },
+        "ema50": {
+          "value": 73080.79,
+          "above": false,
+          "period": 50
+        },
+        "ema200": {
+          "value": 70510.68,
+          "above": true,
+          "period": 200
+        },
+        "score": 1,
+        "bias": "mixed"
+      }
+    },
+    {
+      "id": "smallCap",
+      "label": "Small Cap",
+      "subtitle": "Nifty Smallcap 250",
+      "last": 18481.4,
+      "change": 36.45,
+      "changePct": 0.2,
+      "direction": "up",
+      "arrow": "\u0393\u00fb\u2593",
+      "ema": null
+    }
+  ],
+  "sectors": [
+    {
+      "id": "it",
+      "label": "IT",
+      "subtitle": null,
+      "last": 30695.1,
+      "change": -143.75,
+      "changePct": -0.47,
+      "direction": "down",
+      "arrow": "\u0393\u00fb\u255d",
+      "ema": {
+        "ema20": {
+          "value": 30787.71,
+          "above": false,
+          "period": 20
+        },
+        "ema50": {
+          "value": 30229.18,
+          "above": true,
+          "period": 50
+        },
+        "ema200": {
+          "value": 32197.65,
+          "above": false,
+          "period": 200
+        },
+        "score": 1,
+        "bias": "mixed"
+      }
+    },
+    {
+      "id": "bank",
+      "label": "Bank",
+      "subtitle": null,
+      "last": 57369.65,
+      "change": -10.95,
+      "changePct": -0.02,
+      "direction": "down",
+      "arrow": "\u0393\u00fb\u255d",
+      "ema": {
+        "ema20": {
+          "value": 57505.18,
+          "above": false,
+          "period": 20
+        },
+        "ema50": {
+          "value": 57316.92,
+          "above": true,
+          "period": 50
+        },
+        "ema200": {
+          "value": 57303.37,
+          "above": true,
+          "period": 200
+        },
+        "score": 2,
+        "bias": "bullish"
+      }
+    },
+    {
+      "id": "fin",
+      "label": "Financial Services",
+      "subtitle": null,
+      "last": 26051,
+      "change": 127.95,
+      "changePct": 0.49,
+      "direction": "up",
+      "arrow": "\u0393\u00fb\u2593",
+      "ema": null
+    },
+    {
+      "id": "auto",
+      "label": "Auto",
+      "subtitle": null,
+      "last": 27710.9,
+      "change": -126.5,
+      "changePct": -0.45,
+      "direction": "down",
+      "arrow": "\u0393\u00fb\u255d",
+      "ema": {
+        "ema20": {
+          "value": 26766.73,
+          "above": true,
+          "period": 20
+        },
+        "ema50": {
+          "value": 26559.54,
+          "above": true,
+          "period": 50
+        },
+        "ema200": {
+          "value": 26848.23,
+          "above": true,
+          "period": 200
+        },
+        "score": 3,
+        "bias": "bullish"
+      }
+    },
+    {
+      "id": "pharma",
+      "label": "Pharma",
+      "subtitle": null,
+      "last": 26478.1,
+      "change": -180.55,
+      "changePct": -0.68,
+      "direction": "down",
+      "arrow": "\u0393\u00fb\u255d",
+      "ema": {
+        "ema20": {
+          "value": 26587.96,
+          "above": false,
+          "period": 20
+        },
+        "ema50": {
+          "value": 26093.28,
+          "above": true,
+          "period": 50
+        },
+        "ema200": {
+          "value": 24140.14,
+          "above": true,
+          "period": 200
+        },
+        "score": 2,
+        "bias": "bullish"
+      }
+    },
+    {
+      "id": "fmcg",
+      "label": "FMCG",
+      "subtitle": null,
+      "last": 45892.75,
+      "change": -62.9,
+      "changePct": -0.14,
+      "direction": "down",
+      "arrow": "\u0393\u00fb\u255d",
+      "ema": {
+        "ema20": {
+          "value": 49113.49,
+          "above": false,
+          "period": 20
+        },
+        "ema50": {
+          "value": 49378.27,
+          "above": false,
+          "period": 50
+        },
+        "ema200": {
+          "value": 51938.78,
+          "above": false,
+          "period": 200
+        },
+        "score": 0,
+        "bias": "bearish"
+      }
+    },
+    {
+      "id": "metal",
+      "label": "Metal",
+      "subtitle": null,
+      "last": 13317.45,
+      "change": 141.4,
+      "changePct": 1.07,
+      "direction": "up",
+      "arrow": "\u0393\u00fb\u2593",
+      "ema": {
+        "ema20": {
+          "value": 12637.89,
+          "above": false,
+          "period": 20
+        },
+        "ema50": {
+          "value": 12717.24,
+          "above": false,
+          "period": 50
+        },
+        "ema200": {
+          "value": 11615.82,
+          "above": true,
+          "period": 200
+        },
+        "score": 1,
+        "bias": "mixed"
+      }
+    },
+    {
+      "id": "energy",
+      "label": "Energy",
+      "subtitle": null,
+      "last": 38067.85,
+      "change": -72.95,
+      "changePct": -0.19,
+      "direction": "down",
+      "arrow": "\u0393\u00fb\u255d",
+      "ema": {
+        "ema20": {
+          "value": 39445.34,
+          "above": false,
+          "period": 20
+        },
+        "ema50": {
+          "value": 39416.8,
+          "above": false,
+          "period": 50
+        },
+        "ema200": {
+          "value": 36999.56,
+          "above": true,
+          "period": 200
+        },
+        "score": 1,
+        "bias": "mixed"
+      }
+    },
+    {
+      "id": "realty",
+      "label": "Realty",
+      "subtitle": null,
+      "last": 907.9,
+      "change": -8.25,
+      "changePct": -0.9,
+      "direction": "down",
+      "arrow": "\u0393\u00fb\u255d",
+      "ema": {
+        "ema20": {
+          "value": 879.3,
+          "above": true,
+          "period": 20
+        },
+        "ema50": {
+          "value": 835.15,
+          "above": true,
+          "period": 50
+        },
+        "ema200": {
+          "value": 841.55,
+          "above": true,
+          "period": 200
+        },
+        "score": 3,
+        "bias": "bullish"
+      }
+    },
+    {
+      "id": "media",
+      "label": "Media",
+      "subtitle": null,
+      "last": 1565.45,
+      "change": 4.7,
+      "changePct": 0.3,
+      "direction": "up",
+      "arrow": "\u0393\u00fb\u2593",
+      "ema": {
+        "ema20": {
+          "value": 1498.28,
+          "above": true,
+          "period": 20
+        },
+        "ema50": {
+          "value": 1472.28,
+          "above": true,
+          "period": 50
+        },
+        "ema200": {
+          "value": 1457.9,
+          "above": true,
+          "period": 200
+        },
+        "score": 3,
+        "bias": "bullish"
+      }
+    },
+    {
+      "id": "psuBank",
+      "label": "PSU Bank",
+      "subtitle": null,
+      "last": 8514.85,
+      "change": -37.75,
+      "changePct": -0.44,
+      "direction": "down",
+      "arrow": "\u0393\u00fb\u255d",
+      "ema": {
+        "ema20": {
+          "value": 8399.69,
+          "above": false,
+          "period": 20
+        },
+        "ema50": {
+          "value": 8429.42,
+          "above": false,
+          "period": 50
+        },
+        "ema200": {
+          "value": 8388.1,
+          "above": false,
+          "period": 200
+        },
+        "score": 0,
+        "bias": "bearish"
+      }
+    },
+    {
+      "id": "privateBank",
+      "label": "Private Bank",
+      "subtitle": null,
+      "last": 27824.5,
+      "change": 76.65,
+      "changePct": 0.28,
+      "direction": "up",
+      "arrow": "\u0393\u00fb\u2593",
+      "ema": null
+    },
+    {
+      "id": "infra",
+      "label": "Infra",
+      "subtitle": null,
+      "last": 9197.8,
+      "change": -6.4,
+      "changePct": -0.07,
+      "direction": "down",
+      "arrow": "\u0393\u00fb\u255d",
+      "ema": {
+        "ema20": {
+          "value": 9378.93,
+          "above": false,
+          "period": 20
+        },
+        "ema50": {
+          "value": 9347.02,
+          "above": true,
+          "period": 50
+        },
+        "ema200": {
+          "value": 9326.17,
+          "above": true,
+          "period": 200
+        },
+        "score": 2,
+        "bias": "bullish"
+      }
+    },
+    {
+      "id": "healthcare",
+      "label": "Healthcare",
+      "subtitle": null,
+      "last": 16408.05,
+      "change": -144.15,
+      "changePct": -0.87,
+      "direction": "down",
+      "arrow": "\u0393\u00fb\u255d",
+      "ema": null
+    },
+    {
+      "id": "consumerDurables",
+      "label": "Consumer Durables",
+      "subtitle": null,
+      "last": 39483.8,
+      "change": -168.9,
+      "changePct": -0.43,
+      "direction": "down",
+      "arrow": "\u0393\u00fb\u255d",
+      "ema": null
+    },
+    {
+      "id": "oilGas",
+      "label": "Oil & Gas",
+      "subtitle": null,
+      "last": 11187.65,
+      "change": 23,
+      "changePct": 0.21,
+      "direction": "up",
+      "arrow": "\u0393\u00fb\u2593",
+      "ema": null
+    },
+    {
+      "id": "chemicals",
+      "label": "Chemicals",
+      "subtitle": null,
+      "last": 30101.8,
+      "change": -220.65,
+      "changePct": -0.73,
+      "direction": "down",
+      "arrow": "\u0393\u00fb\u255d",
+      "ema": null
+    }
+  ],
+  "fromCache": true,
+  "refreshing": true,
+  "stale": true,
+  "derivatives": {
+    "fiiCash": 1428.5,
+    "diiCash": 2190.2,
+    "fiiFuturesLongPct": 64.2,
+    "niftyPcr": 1.18,
+    "bankNiftyPcr": 1.04,
+    "maxPain": 23900,
+    "vixPercentile": 18
+  }
+}

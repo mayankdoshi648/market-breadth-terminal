@@ -183,7 +183,16 @@ def get_overview_data():
             {"id": "healthcare", "label": "Healthcare", "last": 16408.05, "change": -144.15, "changePct": -0.87, "direction": "down", "arrow": "▼", "ema": {"ema20": {"above": False}, "ema50": {"above": True}, "ema200": {"above": True}, "bias": "bullish"}},
             {"id": "consumerDurables", "label": "Consumer Durables", "last": 39483.80, "change": -168.90, "changePct": -0.43, "direction": "down", "arrow": "▼", "ema": {"ema20": {"above": False}, "ema50": {"above": False}, "ema200": {"above": False}, "bias": "bearish"}},
             {"id": "chemicals", "label": "Chemicals", "last": 30101.80, "change": -220.65, "changePct": -0.73, "direction": "down", "arrow": "▼", "ema": {"ema20": {"above": False}, "ema50": {"above": False}, "ema200": {"above": False}, "bias": "bearish"}}
-        ]
+        ],
+        "derivatives": {
+            "fiiCash": 1428.5,
+            "diiCash": 2190.2,
+            "fiiFuturesLongPct": 64.2,
+            "niftyPcr": 1.18,
+            "bankNiftyPcr": 1.04,
+            "maxPain": 23900,
+            "vixPercentile": 18
+        }
     }
 
 def get_breadth_data(universe="nifty50"):

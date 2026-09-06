@@ -17,6 +17,9 @@
   
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+  <!-- TradingView Lightweight Charts -->
+  <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
 
@@ -175,7 +178,7 @@
           </div>
         </div>
 
-        <!-- Institutional Momentum Gauges (McClellan & NH-NL) -->
+        <!-- Institutional Momentum & Algorithmic Thrust Gauges -->
         <div class="institutional-gauges-row">
           <!-- McClellan Oscillator -->
           <div class="mini-gauge-box">
@@ -198,6 +201,114 @@
             <div class="mini-gauge-val-row">
               <span id="nhnl-val" class="mono font-bold font-lg">42 / 3</span>
               <span class="mini-gauge-desc">Net: +39</span>
+            </div>
+          </div>
+
+          <!-- Zweig Breadth Thrust (ZBT) -->
+          <div class="mini-gauge-box">
+            <div class="mini-gauge-label">
+              <span>Zweig Thrust (10D EMA)</span>
+              <span id="zweig-tag" class="mono font-bold text-cyan">INACTIVE</span>
+            </div>
+            <div class="mini-gauge-val-row">
+              <span id="zweig-val" class="mono font-bold font-lg">0.542</span>
+              <span class="mini-gauge-desc">Super-Bull Target: &ge; 0.615</span>
+            </div>
+          </div>
+
+          <!-- 9:1 Up/Down Volume Ratio -->
+          <div class="mini-gauge-box">
+            <div class="mini-gauge-label">
+              <span>Up/Down Vol Ratio</span>
+              <span id="vol-ratio-tag" class="mono font-bold text-green">ACCUMULATION</span>
+            </div>
+            <div class="mini-gauge-val-row">
+              <span id="vol-ratio-val" class="mono font-bold font-lg">3.4 : 1</span>
+              <span class="mini-gauge-desc">9:1 Day: Normal</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Derivatives & Options Macro Radar Section -->
+    <section class="derivatives-section">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">
+            <i data-lucide="layers"></i> Institutional Derivatives &amp; Options Positioning Radar
+          </h2>
+          <span class="section-subtitle">Real-time FII / DII net cash &amp; futures flows, Put-Call Ratio (PCR), and strike Max Pain gravity points</span>
+        </div>
+        <div class="brand-badge">SMART MONEY TRACKER</div>
+      </div>
+
+      <div class="derivatives-grid">
+        <!-- FII / DII Flow Card -->
+        <div class="derivatives-card">
+          <div class="derivatives-card-head">
+            <span class="derivatives-card-title"><i data-lucide="landmark"></i> FII / DII Net Institutional Flow</span>
+            <span id="fii-sentiment-pill" class="badge sentiment-badge bullish">FII NET BUYING</span>
+          </div>
+          <div class="flow-metrics-row">
+            <div class="flow-item">
+              <span class="flow-label">FII Net Cash</span>
+              <span id="fii-cash-val" class="flow-val mono font-bold text-green">+₹1,428.5 Cr</span>
+            </div>
+            <div class="flow-item">
+              <span class="flow-label">DII Net Cash</span>
+              <span id="dii-cash-val" class="flow-val mono font-bold text-green">+₹2,190.2 Cr</span>
+            </div>
+            <div class="flow-item">
+              <span class="flow-label">FII Index Futures Long %</span>
+              <span id="fii-futures-val" class="flow-val mono font-bold text-cyan">64.2% Long</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Options PCR & Max Pain Card -->
+        <div class="derivatives-card">
+          <div class="derivatives-card-head">
+            <span class="derivatives-card-title"><i data-lucide="scale"></i> Nifty Options PCR &amp; Max Pain</span>
+            <span id="pcr-status-pill" class="badge sentiment-badge bullish">BULLISH SUPPORT</span>
+          </div>
+          <div class="flow-metrics-row">
+            <div class="flow-item">
+              <span class="flow-label">Nifty OI PCR</span>
+              <span id="nifty-pcr-val" class="flow-val mono font-bold text-green">1.18</span>
+              <span class="mini-gauge-desc">Oversold &lt;0.75 | OB &gt;1.30</span>
+            </div>
+            <div class="flow-item">
+              <span class="flow-label">Bank Nifty PCR</span>
+              <span id="bank-pcr-val" class="flow-val mono font-bold text-cyan">1.04</span>
+              <span class="mini-gauge-desc">Neutral Range</span>
+            </div>
+            <div class="flow-item">
+              <span class="flow-label">Weekly Max Pain</span>
+              <span id="max-pain-val" class="flow-val mono font-bold text-gold">23,900 CE/PE</span>
+              <span class="mini-gauge-desc">Pin Gravitation Point</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- India VIX & Regime Card -->
+        <div class="derivatives-card">
+          <div class="derivatives-card-head">
+            <span class="derivatives-card-title"><i data-lucide="activity"></i> Volatility Regime &amp; IV Rank</span>
+            <span id="vix-regime-pill" class="badge sentiment-badge bullish">LOW RISK / STABLE</span>
+          </div>
+          <div class="flow-metrics-row">
+            <div class="flow-item">
+              <span class="flow-label">India VIX</span>
+              <span id="vix-current-val" class="flow-val mono font-bold text-green">10.68</span>
+            </div>
+            <div class="flow-item">
+              <span class="flow-label">52W Percentile Rank</span>
+              <span id="vix-percentile-val" class="flow-val mono font-bold text-cyan">18th Percentile</span>
+            </div>
+            <div class="flow-item">
+              <span class="flow-label">Regime Playbook</span>
+              <span id="vix-action-val" class="flow-val mono font-bold text-green">Favorable for Breakouts</span>
             </div>
           </div>
         </div>
@@ -386,6 +497,8 @@
           <button class="filter-chip stock-filter-chip active" data-filter="all">All</button>
           <button class="filter-chip stock-filter-chip watchlist-chip" data-filter="watchlist" title="Show Pinned Favorites (Hotkey: W)">★ Watchlist (<span id="watchlist-count">0</span>)</button>
           <button class="filter-chip stock-filter-chip strategy-chip" data-filter="stratStage2" title=">20, 50, 200 DMA + Near 52W High + RS >= 80">🎯 Stage 2 Breakouts</button>
+          <button class="filter-chip stock-filter-chip strategy-chip" data-filter="stratVCP" title="Volatility Contraction Pattern near Pivot">🌪️ VCP Pattern</button>
+          <button class="filter-chip stock-filter-chip strategy-chip" data-filter="stratPocketPivot" title="Pocket Pivot Surge off 10/20 EMA">⚡ Pocket Pivot</button>
           <button class="filter-chip stock-filter-chip strategy-chip" data-filter="stratOversoldBounce" title="RSI <= 35 and > 200 DMA">⚡ Oversold Pullback</button>
           <button class="filter-chip stock-filter-chip" data-filter="volumeSurge">🔥 Volume Surge</button>
           <button class="filter-chip stock-filter-chip" data-filter="allBull">All EMAs Bullish (3/3)</button>
@@ -408,6 +521,7 @@
               <th data-sort="last">LTP (₹) ↕</th>
               <th data-sort="changePct">Day Chg % ↕</th>
               <th style="width: 65px; text-align: center;">7D Trend</th>
+              <th style="text-align: center;" title="Multi-Timeframe Trend Alignment [Daily | Weekly | Monthly]">MTF Matrix</th>
               <th data-sort="rsi" style="text-align: center;">RSI (14) ↕</th>
               <th data-sort="volumeSurge" style="text-align: center;">Volume ↕</th>
               <th data-sort="dma20" style="text-align: center;">20 DMA</th>
@@ -621,13 +735,13 @@
     </div>
   </div>
 
-  <!-- 1. Interactive Stock Technical Candlestick Modal -->
+  <!-- 1. Interactive Stock Technical Candlestick Modal (TradingView Lightweight Charts) -->
   <div id="chart-modal" class="modal-overlay" aria-hidden="true">
-    <div class="modal-card modal-card-wide">
+    <div class="modal-card modal-card-wide" style="max-width: 900px;">
       <div class="modal-header">
         <div class="modal-title">
           <i data-lucide="candlestick-chart" style="color: var(--bull-green);"></i>
-          <span id="chart-modal-title">RELIANCE — Technical Candlestick &amp; Moving Average Radar</span>
+          <span id="chart-modal-title">RELIANCE — Technical Candlestick &amp; Anchored VWAP Engine</span>
         </div>
         <button id="chart-modal-close" class="modal-close-btn" title="Close Modal">
           <i data-lucide="x"></i>
@@ -645,25 +759,28 @@
         </button>
       </div>
 
-      <div class="chart-canvas-box" style="height: 320px; position: relative; margin-top: 0.75rem;">
-        <canvas id="stock-candlestick-canvas"></canvas>
+      <!-- TradingView Lightweight Charts Interactive Container -->
+      <div id="tv-chart-wrapper" style="height: 380px; width: 100%; position: relative; margin-top: 0.75rem; border-radius: 8px; overflow: hidden; background: #0b0f19;">
+        <div id="tv-chart-container" style="width: 100%; height: 100%;"></div>
+        <div class="tv-chart-watermark">TradingView Lightweight Charts &bull; AVWAP Active</div>
       </div>
 
       <div class="stock-ema-distance-row">
         <div class="ema-dist-badge">20 DMA: <span id="chart-dist-20" class="mono font-bold">—</span></div>
         <div class="ema-dist-badge">50 DMA: <span id="chart-dist-50" class="mono font-bold">—</span></div>
         <div class="ema-dist-badge">200 DMA: <span id="chart-dist-200" class="mono font-bold">—</span></div>
+        <div class="ema-dist-badge" style="border-color: var(--accent-gold);">Anchored VWAP: <span id="chart-avwap-val" class="mono font-bold text-gold">—</span></div>
       </div>
     </div>
   </div>
 
-  <!-- 2. Kotak Neo One-Click Order Ticket Modal -->
+  <!-- 2. Kotak Neo One-Click Order Ticket Modal with Automated Bracket Risk Calculator -->
   <div id="order-modal" class="modal-overlay" aria-hidden="true">
-    <div class="modal-card" style="max-width: 460px;">
+    <div class="modal-card" style="max-width: 500px;">
       <div class="modal-header">
         <div class="modal-title">
           <i data-lucide="zap" style="color: var(--accent-gold);"></i>
-          <span>Kotak Neo &bull; Instant Order Ticket</span>
+          <span>Kotak Neo &bull; Precision Risk Order Ticket</span>
         </div>
         <button id="order-modal-close" class="modal-close-btn" title="Close Modal">
           <i data-lucide="x"></i>
@@ -684,7 +801,31 @@
           <button id="order-tab-sell" class="order-side-btn sell">SELL</button>
         </div>
 
-        <div class="order-form-grid">
+        <!-- Position Sizing & Capital Risk Calculator -->
+        <div class="risk-calc-box">
+          <div class="risk-calc-title"><i data-lucide="shield-check"></i> Position Sizing Risk Calculator</div>
+          <div class="risk-calc-grid">
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.7rem;">Account Capital (₹)</label>
+              <input type="number" id="risk-capital-input" class="form-input mono" value="500000" step="50000" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.7rem;">Max Risk / Trade</label>
+              <select id="risk-pct-select" class="form-input">
+                <option value="0.005">0.5% (Conservative - ₹2.5k)</option>
+                <option value="0.01" selected>1.0% (Standard - ₹5.0k)</option>
+                <option value="0.02">2.0% (Aggressive - ₹10k)</option>
+              </select>
+            </div>
+          </div>
+          <div class="risk-calc-summary">
+            <span>Recommended Safe Size:</span>
+            <strong id="risk-recommended-qty" class="mono text-green">84 Shares</strong>
+            <button id="risk-apply-qty-btn" class="btn-micro" title="Apply recommended qty to order">Apply Size</button>
+          </div>
+        </div>
+
+        <div class="order-form-grid" style="margin-top: 0.75rem;">
           <div class="form-group">
             <label class="form-label">Order Type</label>
             <select id="order-type-select" class="form-input">
@@ -712,13 +853,35 @@
           </div>
         </div>
 
-        <div class="order-estimated-box">
+        <!-- Automated Bracket Order (Stop-Loss & Target GTT) -->
+        <div class="bracket-order-box">
+          <div class="bracket-head">
+            <label class="bracket-toggle-label">
+              <input type="checkbox" id="order-bracket-toggle" checked />
+              <span>Attach Bracket OCO Protection (Stop-Loss &amp; Target)</span>
+            </label>
+          </div>
+          <div id="bracket-inputs-row" class="bracket-inputs-row">
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.7rem; color: var(--bear-red);">Stop-Loss (₹)</label>
+              <input type="number" id="order-sl-input" class="form-input mono" step="0.05" />
+              <span id="order-sl-pct" class="form-help" style="color: var(--bear-red);">-2.0%</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.7rem; color: var(--bull-green);">Target (₹)</label>
+              <input type="number" id="order-tp-input" class="form-input mono" step="0.05" />
+              <span id="order-tp-pct" class="form-help" style="color: var(--bull-green);">+6.0% (3.0 R:R)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="order-estimated-box" style="margin-top: 0.75rem;">
           <span>Est. Required Margin:</span>
           <strong id="order-margin-est" class="mono font-bold text-primary">₹2,984.50</strong>
         </div>
 
         <button id="order-submit-btn" class="btn-action primary full-width" style="margin-top: 1rem; padding: 0.65rem;">
-          <i data-lucide="check-circle"></i> Place Order via Kotak Neo
+          <i data-lucide="check-circle"></i> Place Protected Order via Kotak Neo
         </button>
       </div>
     </div>

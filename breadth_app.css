@@ -2006,6 +2006,208 @@ body {
   color: var(--text-secondary);
 }
 
+/* ==========================================================================
+   7. INSTITUTIONAL DERIVATIVES & OPTIONS RADAR
+   ========================================================================== */
+.derivatives-section {
+  margin-top: 1.5rem;
+}
+
+.derivatives-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 900px) {
+  .derivatives-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.derivatives-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.2s ease;
+}
+
+.derivatives-card:hover {
+  border-color: var(--border-medium);
+}
+
+.derivatives-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.derivatives-card-title {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sentiment-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+}
+
+.sentiment-badge.bullish {
+  background: var(--bull-green-glow);
+  color: var(--bull-green);
+  border: 1px solid var(--bull-green);
+}
+
+.sentiment-badge.bearish {
+  background: var(--bear-red-glow);
+  color: var(--bear-red);
+  border: 1px solid var(--bear-red);
+}
+
+.flow-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.flow-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.flow-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.flow-val {
+  font-size: 0.95rem;
+}
+
+/* Multi-Timeframe Alignment Matrix Pill */
+.mtf-pill-group {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.mtf-seg {
+  padding: 2px 5px;
+}
+
+.mtf-seg.bull {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--bull-green);
+}
+
+.mtf-seg.bear {
+  background: rgba(244, 63, 94, 0.2);
+  color: var(--bear-red);
+}
+
+/* TradingView Watermark & Controls */
+.tv-chart-watermark {
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.25);
+  pointer-events: none;
+  font-family: var(--font-mono);
+}
+
+/* Bracket Order & Risk Management */
+.risk-calc-box {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.risk-calc-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--neutral-blue);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
+.risk-calc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.risk-calc-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--border-subtle);
+  font-size: 0.75rem;
+}
+
+.btn-micro {
+  background: var(--bull-green);
+  color: #000;
+  border: none;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.bracket-order-box {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.bracket-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.bracket-inputs-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
 
 
 

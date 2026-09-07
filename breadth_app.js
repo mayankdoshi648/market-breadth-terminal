@@ -2261,24 +2261,22 @@ function renderStockTreemap(stocks) {
         datasets: [{
           tree: treeData,
           key: 'value',
-          groups: ['sector', 'symbol'],
+          groups: ['sector'], // Group ONLY by sector so leaf nodes are the actual stocks!
           spacing: 1,
           borderWidth: 1,
           borderColor: '#070a11', // Matches bg-primary
           backgroundColor: (ctx) => {
             if (ctx.type !== 'data') return 'transparent';
             const item = ctx.raw;
-            if (!item || !item._data) return '#64748b';
+            if (!item) return '#64748b';
             
-            // In chartjs-chart-treemap, _data contains the array of original objects for this node
-            const dataArr = Array.isArray(item._data) ? item._data : [item._data];
-            
-            // If this node represents multiple stocks (Sector node), make it transparent
-            if (dataArr.length > 1) return 'transparent';
+            // If it has children or 'sector' is the only group level and it has a sum, it's the group node.
+            // In chartjs-chart-treemap, group nodes have `children` or their _data is an array.
+            if (item.children || Array.isArray(item._data)) return 'transparent';
 
-            // It's a leaf node (single stock)
-            const leaf = dataArr[0];
+            const leaf = item._data || item;
             const chg = leaf.change || 0;
+            
             if (chg >= 2) return 'rgba(34, 197, 94, 0.9)'; // strong green
             if (chg > 0) return 'rgba(34, 197, 94, 0.6)';  // weak green
             if (chg <= -2) return 'rgba(239, 68, 68, 0.9)'; // strong red
@@ -2294,17 +2292,15 @@ function renderStockTreemap(stocks) {
             formatter: (ctx) => {
               if (ctx.type !== 'data') return '';
               const item = ctx.raw;
-              if (!item || !item._data) return '';
-              
-              const dataArr = Array.isArray(item._data) ? item._data : [item._data];
+              if (!item) return '';
               
               // Don't label the sector node internally
-              if (dataArr.length > 1) return ''; 
+              if (item.children || Array.isArray(item._data)) return ''; 
 
-              const leaf = dataArr[0];
+              const leaf = item._data || item;
               const chg = leaf.change || 0;
               return [
-                leaf.symbol, 
+                leaf.symbol || 'Unknown', 
                 `₹${leaf.last || 0}`, 
                 (chg > 0 ? '+' : '') + chg.toFixed(2) + '%'
               ];

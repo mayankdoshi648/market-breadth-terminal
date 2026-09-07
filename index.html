@@ -18,6 +18,9 @@
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   
+  <!-- Chart.js Treemap Plugin -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-treemap@3.1.0/dist/chartjs-chart-treemap.min.js"></script>
+  
   <!-- TradingView Lightweight Charts -->
   <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 </head>
@@ -495,6 +498,42 @@
       </div>
     </section>
 
+  <!-- Options & Derivatives Radar -->
+    <section class="derivatives-radar-section">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">
+            <i data-lucide="radar"></i> Options & Derivatives Radar (GEX)
+          </h2>
+          <span class="section-subtitle">Simulated Gamma Exposure (GEX) Profile & Put/Call Ratio (PCR)</span>
+        </div>
+      </div>
+      <div class="derivatives-grid">
+        <!-- GEX Profile Chart -->
+        <div class="derivative-card gex-panel">
+          <div class="derivative-head">
+            <h3 class="derivative-title"><i data-lucide="bar-chart-horizontal"></i> Nifty Gamma Exposure (GEX) Profile</h3>
+            <span class="derivative-subtitle">Call OI vs Put OI across Strikes (Simulated)</span>
+          </div>
+          <div class="gex-canvas-wrapper">
+            <canvas id="gex-chart-canvas"></canvas>
+          </div>
+        </div>
+        
+        <!-- PCR Gauge -->
+        <div class="derivative-card pcr-panel">
+          <div class="derivative-head">
+            <h3 class="derivative-title"><i data-lucide="gauge"></i> Aggregate Put/Call Ratio</h3>
+            <span class="derivative-subtitle">Contrarian Extreme Indicator</span>
+          </div>
+          <div class="pcr-gauge-wrapper">
+            <div id="pcr-value" class="pcr-value-display">1.00</div>
+            <div class="pcr-status-tag" id="pcr-status-tag">Neutral</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Sector Radar & Matrix -->
     <section class="sector-matrix-section">
       <div class="section-head">
@@ -584,6 +623,11 @@
       </div>
 
       <div class="scanner-toolbar">
+        <div class="view-mode-toggle stock-view-toggle">
+          <button id="stock-view-table-btn" class="toggle-mode-btn active" title="Table View"><i data-lucide="list"></i> Table</button>
+          <button id="stock-view-treemap-btn" class="toggle-mode-btn" title="Finviz-Style Treemap"><i data-lucide="layout"></i> Treemap</button>
+        </div>
+
         <div class="search-wrapper">
           <i data-lucide="search" class="search-icon"></i>
           <input 
@@ -641,6 +685,16 @@
             <!-- Populated via breadth_app.js -->
           </tbody>
         </table>
+      </div>
+      
+      <!-- Treemap View -->
+      <div id="stock-treemap-container" class="stock-treemap-wrapper hidden">
+        <div class="treemap-header-info">
+          <span>Treemap Intensity: <strong style="color: var(--bull-green);">Green (Gainers)</strong> vs <strong style="color: var(--bear-red);">Red (Decliners)</strong> — Sized deterministically by synthetic Market Cap Proxy</span>
+        </div>
+        <div class="treemap-canvas-wrapper" style="position: relative; height: 600px; width: 100%;">
+          <canvas id="stock-treemap-canvas"></canvas>
+        </div>
       </div>
     </section>
 

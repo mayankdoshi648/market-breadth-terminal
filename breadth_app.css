@@ -2635,5 +2635,156 @@ body {
   color: var(--text-muted);
 }
 
+/* ==========================================================================
+   DERIVATIVES RADAR & TREEMAP STYLES
+   ========================================================================== */
 
+.derivatives-radar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
 
+.derivatives-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .derivatives-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.derivative-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+  transition: border-color 0.3s ease;
+}
+
+.derivative-card:hover {
+  border-color: var(--border-medium);
+}
+
+.derivative-head {
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.derivative-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.derivative-title i {
+  color: var(--brand-blue);
+  width: 18px;
+  height: 18px;
+}
+
+.derivative-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.gex-canvas-wrapper {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  min-height: 300px;
+}
+
+.pcr-gauge-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 1rem;
+  padding: 2rem 0;
+}
+
+.pcr-value-display {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 4rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  text-shadow: 0 0 20px rgba(255,255,255,0.1);
+  line-height: 1;
+}
+
+.pcr-status-tag {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.pcr-status-tag.bullish {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--bull-green);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.pcr-status-tag.bearish {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--bear-red);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.pcr-status-tag.neutral {
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--text-secondary);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+/* Treemap Styling */
+.stock-treemap-wrapper {
+  width: 100%;
+  margin-top: 1.5rem;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-medium);
+  padding: 1rem;
+}
+
+.treemap-header-info {
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.treemap-canvas-wrapper {
+  position: relative;
+  width: 100%;
+  height: 600px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Toggle Styles */
+.stock-view-toggle {
+  margin-right: auto;
+}

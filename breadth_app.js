@@ -857,87 +857,124 @@ function detectDivergence(series) {
   banner.style.display = 'none';
 }
 
-// Institutional Derivatives & Options Radar Renderer
+// Institutional Derivatives & Options Radar Renderer (GEX & PCR)
 function renderDerivativesRadar(overview) {
-  const deriv = overview?.derivatives || {
-    fiiCash: 1428.5,
-    diiCash: 2190.2,
-    fiiFuturesLongPct: 64.2,
-    niftyPcr: 1.18,
-    bankNiftyPcr: 1.04,
-    maxPain: 23900,
-    vixPercentile: 18
-  };
-
-  // 1. FII / DII Flows
-  if ($('fii-cash-val')) {
-    const sign = deriv.fiiCash >= 0 ? '+' : '';
-    $('fii-cash-val').textContent = `${sign}₹${fmtNum(deriv.fiiCash)} Cr`;
-    $('fii-cash-val').style.color = deriv.fiiCash >= 0 ? 'var(--bull-green)' : 'var(--bear-red)';
-  }
-  if ($('dii-cash-val')) {
-    const sign = deriv.diiCash >= 0 ? '+' : '';
-    $('dii-cash-val').textContent = `${sign}₹${fmtNum(deriv.diiCash)} Cr`;
-    $('dii-cash-val').style.color = deriv.diiCash >= 0 ? 'var(--bull-green)' : 'var(--bear-red)';
-  }
-  if ($('fii-futures-val')) {
-    $('fii-futures-val').textContent = `${deriv.fiiFuturesLongPct}% Long`;
-    $('fii-futures-val').style.color = deriv.fiiFuturesLongPct >= 50 ? 'var(--bull-green)' : 'var(--bear-red)';
-  }
-  if ($('fii-sentiment-pill')) {
-    const isBull = (deriv.fiiCash >= 0 && deriv.fiiFuturesLongPct >= 50);
-    $('fii-sentiment-pill').textContent = isBull ? 'FII NET BUYING' : 'FII DELEVERAGING';
-    $('fii-sentiment-pill').className = `badge sentiment-badge ${isBull ? 'bullish' : 'bearish'}`;
-  }
-
-  // 2. Options PCR & Max Pain
-  if ($('nifty-pcr-val')) {
-    $('nifty-pcr-val').textContent = deriv.niftyPcr.toFixed(2);
-    $('nifty-pcr-val').style.color = deriv.niftyPcr >= 1.0 ? 'var(--bull-green)' : (deriv.niftyPcr <= 0.75 ? 'var(--bear-red)' : 'var(--neutral-blue)');
-  }
-  if ($('bank-pcr-val')) {
-    $('bank-pcr-val').textContent = deriv.bankNiftyPcr.toFixed(2);
-    $('bank-pcr-val').style.color = deriv.bankNiftyPcr >= 1.0 ? 'var(--bull-green)' : (deriv.bankNiftyPcr <= 0.75 ? 'var(--bear-red)' : 'var(--neutral-blue)');
-  }
-  if ($('max-pain-val')) {
-    $('max-pain-val').textContent = `${fmtNum(deriv.maxPain, 0)} CE/PE`;
-  }
-  if ($('pcr-status-pill')) {
-    const pcr = deriv.niftyPcr;
-    const pill = $('pcr-status-pill');
-    if (pcr >= 1.25) {
-      pill.textContent = 'PUT WRITING SUPPORT';
-      pill.className = 'badge sentiment-badge bullish';
-    } else if (pcr <= 0.75) {
-      pill.textContent = 'CALL WRITING CAP';
-      pill.className = 'badge sentiment-badge bearish';
-    } else {
-      pill.textContent = 'BALANCED FLOW';
-      pill.className = 'badge sentiment-badge';
-      pill.style.color = 'var(--text-secondary)';
+  // Generate realistic simulated mock data for GEX
+  const currentNifty = overview?.headline?.find(h => h.id === 'nifty50')?.last || 24500;
+  const atmStrike = Math.round(currentNifty / 100) * 100;
+  
+  const strikes = [];
+  const callOI = [];
+  const putOI = [];
+  
+  // Generate 15 strikes around ATM
+  for (let i = -7; i <= 7; i++) {
+    const strike = atmStrike + (i * 100);
+    strikes.push(strike);
+    
+    // Simulate realistically distributed OI (Calls dominate above ATM, Puts below ATM)
+    // Randomize slightly but deterministically
+    let baseCall = i > 0 ? (Math.abs(i) * 15000) : (10000 / (Math.abs(i) + 1));
+    let basePut = i < 0 ? (Math.abs(i) * 15000) : (10000 / (Math.abs(i) + 1));
+    
+    // Add peak at round numbers (500s)
+    if (strike % 500 === 0) {
+      baseCall *= 2.5;
+      basePut *= 2.5;
     }
+    
+    callOI.push(Math.round(baseCall + (strike % 1234)));
+    putOI.push(Math.round(basePut + (strike % 4321)));
   }
 
-  // 3. Volatility Regime
-  const vixItem = overview?.headline?.find(h => h.id === 'indiaVix') || { last: 10.68 };
-  if ($('vix-current-val')) {
-    $('vix-current-val').textContent = fmtNum(vixItem.last);
-    $('vix-current-val').style.color = vixItem.last <= 15 ? 'var(--bull-green)' : (vixItem.last >= 20 ? 'var(--bear-red)' : 'var(--warn-amber)');
+  // 1. Render GEX Horizontal Bar Chart
+  const canvas = $('gex-chart-canvas');
+  if (canvas) {
+    if (window.gexChartInstance) {
+      window.gexChartInstance.destroy();
+    }
+    
+    const ctx = canvas.getContext('2d');
+    window.gexChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: strikes,
+        datasets: [
+          {
+            label: 'Put OI (Support)',
+            data: putOI.map(v => -v), // Negative for left side
+            backgroundColor: 'rgba(34, 197, 94, 0.7)',
+            borderColor: 'rgba(34, 197, 94, 1)',
+            borderWidth: 1,
+            borderRadius: 4
+          },
+          {
+            label: 'Call OI (Resistance)',
+            data: callOI,
+            backgroundColor: 'rgba(239, 68, 68, 0.7)',
+            borderColor: 'rgba(239, 68, 68, 1)',
+            borderWidth: 1,
+            borderRadius: 4
+          }
+        ]
+      },
+      options: {
+        indexAxis: 'y', // Horizontal
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            labels: { color: '#94a3b8' }
+          },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `${ctx.dataset.label}: ${Math.abs(ctx.raw).toLocaleString()} contracts`
+            }
+          }
+        },
+        scales: {
+          x: {
+            stacked: true,
+            ticks: {
+              color: '#64748b',
+              callback: (val) => Math.abs(val) >= 1000 ? (Math.abs(val)/1000).toFixed(0) + 'k' : Math.abs(val)
+            },
+            grid: { color: 'rgba(255,255,255,0.05)' }
+          },
+          y: {
+            stacked: true,
+            ticks: {
+              color: (ctx) => ctx.tick.value === 7 ? '#ffffff' : '#94a3b8', // Highlight ATM
+              font: (ctx) => ({ weight: ctx.tick.value === 7 ? 'bold' : 'normal' })
+            },
+            grid: { display: false }
+          }
+        }
+      }
+    });
   }
-  if ($('vix-percentile-val')) {
-    $('vix-percentile-val').textContent = `${deriv.vixPercentile}th Percentile`;
-  }
-  if ($('vix-regime-pill')) {
-    const pill = $('vix-regime-pill');
-    if (vixItem.last <= 13) {
-      pill.textContent = 'LOW VOL COMPLACENCY';
-      pill.className = 'badge sentiment-badge bullish';
-    } else if (vixItem.last >= 18) {
-      pill.textContent = 'HIGH VOL ANXIETY';
-      pill.className = 'badge sentiment-badge bearish';
+
+  // 2. Update PCR Gauge
+  const totalCall = callOI.reduce((a,b) => a+b, 0);
+  const totalPut = putOI.reduce((a,b) => a+b, 0);
+  const pcr = totalCall === 0 ? 1 : (totalPut / totalCall);
+  
+  if ($('pcr-value')) {
+    $('pcr-value').textContent = pcr.toFixed(2);
+    const tag = $('pcr-status-tag');
+    if (pcr >= 1.25) {
+      tag.textContent = 'PUT WRITING SUPPORT (BULLISH)';
+      tag.className = 'pcr-status-tag bullish';
+      $('pcr-value').style.color = 'var(--bull-green)';
+    } else if (pcr <= 0.75) {
+      tag.textContent = 'CALL WRITING RESISTANCE (BEARISH)';
+      tag.className = 'pcr-status-tag bearish';
+      $('pcr-value').style.color = 'var(--bear-red)';
     } else {
-      pill.textContent = 'NORMAL REGIME';
-      pill.className = 'badge sentiment-badge';
+      tag.textContent = 'BALANCED (NEUTRAL)';
+      tag.className = 'pcr-status-tag neutral';
+      $('pcr-value').style.color = 'var(--text-primary)';
     }
   }
 }
@@ -2154,6 +2191,114 @@ function renderStockTable() {
   }).join('');
 
   if (window.lucide) window.lucide.createIcons();
+
+  if (typeof renderStockTreemap === 'function') {
+    renderStockTreemap(stocks);
+  }
+}
+
+// ==========================================
+// FINVIZ-STYLE STOCK TREEMAP RENDERER
+// ==========================================
+function renderStockTreemap(stocks) {
+  const canvas = $('stock-treemap-canvas');
+  if (!canvas) return;
+
+  // Generate deterministic size weights (proxy for market cap since data doesn't provide it)
+  const treeData = stocks.map(s => {
+    let hash = 0;
+    for(let i=0; i<s.symbol.length; i++) hash = (hash<<5) - hash + s.symbol.charCodeAt(i);
+    const capProxy = Math.max(100, Math.abs(hash % 10000)) * (s.last || 100);
+    return {
+      sector: s.sector || 'Unknown',
+      symbol: s.symbol,
+      value: capProxy,
+      change: s.changePct || 0,
+      last: s.last || 0
+    };
+  });
+
+  if (window.stockTreemapInstance) {
+    window.stockTreemapInstance.destroy();
+  }
+
+  const ctx = canvas.getContext('2d');
+  
+  // Guard against missing plugin if CDN failed to load
+  if (!Chart.registry.plugins.get('treemap')) {
+    console.error('ChartJS Treemap plugin not loaded.');
+    return;
+  }
+
+  window.stockTreemapInstance = new Chart(ctx, {
+    type: 'treemap',
+    data: {
+      datasets: [{
+        tree: treeData,
+        key: 'value',
+        groups: ['sector', 'symbol'],
+        spacing: 1,
+        borderWidth: 1,
+        borderColor: '#070a11', // Matches bg-primary
+        backgroundColor: (ctx) => {
+          if (ctx.type !== 'data') return 'transparent';
+          const data = ctx.raw._data;
+          
+          // If it's a sector grouping node (has children), transparent inner bg
+          if (data.children) return 'rgba(30, 41, 59, 0.4)';
+
+          const chg = data.change;
+          if (chg >= 2) return 'rgba(34, 197, 94, 0.9)'; // strong green
+          if (chg > 0) return 'rgba(34, 197, 94, 0.5)';  // weak green
+          if (chg <= -2) return 'rgba(239, 68, 68, 0.9)'; // strong red
+          if (chg < 0) return 'rgba(239, 68, 68, 0.5)';  // weak red
+          return '#64748b'; // neutral grey
+        },
+        labels: {
+          display: true,
+          align: 'center',
+          baseline: 'middle',
+          color: '#ffffff',
+          font: { family: 'Outfit', size: 12, weight: '600' },
+          formatter: (ctx) => {
+            if (ctx.type !== 'data') return '';
+            const data = ctx.raw._data;
+            if (data.children) return ''; // don't label sector boxes internally
+            return [data.symbol, (data.change > 0 ? '+' : '') + data.change.toFixed(2) + '%'];
+          }
+        },
+        captions: {
+          display: true,
+          align: 'center',
+          color: '#f8fafc',
+          font: { family: 'Outfit', size: 14, weight: '700' },
+          padding: 8
+        }
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: (items) => {
+              const data = items[0].raw._data;
+              return data.symbol ? `${data.symbol} (${data.sector})` : (data.sector || 'Sector');
+            },
+            label: (item) => {
+              const data = item.raw._data;
+              if (data.symbol) {
+                return `LTP: ₹${data.last} | Day Chg: ${data.change > 0 ? '+' : ''}${data.change}%`;
+              }
+              return `${data.children.length} constituents`;
+            }
+          }
+        }
+      }
+    }
+  });
 }
 
 // ==========================================
@@ -2852,6 +2997,21 @@ function bindEvents() {
       }
       renderStockTable();
     });
+  });
+
+  // Table vs Treemap Toggle
+  $('stock-view-table-btn')?.addEventListener('click', () => {
+    $('stock-view-table-btn').classList.add('active');
+    $('stock-view-treemap-btn').classList.remove('active');
+    document.querySelector('.table-responsive').classList.remove('hidden');
+    $('stock-treemap-container').classList.add('hidden');
+  });
+
+  $('stock-view-treemap-btn')?.addEventListener('click', () => {
+    $('stock-view-treemap-btn').classList.add('active');
+    $('stock-view-table-btn').classList.remove('active');
+    document.querySelector('.table-responsive').classList.add('hidden');
+    $('stock-treemap-container').classList.remove('hidden');
   });
 
   // Kotak Neo Modal Open/Close

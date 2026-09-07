@@ -2269,18 +2269,14 @@ function renderStockTreemap(stocks) {
             const raw = ctx.raw;
             if (!raw) return '#64748b';
             
-            // Get the underlying data items
-            const dataItems = raw._data || raw.data || [];
-            const arr = Array.isArray(dataItems) ? dataItems : [dataItems];
+            // In chartjs-chart-treemap, raw.g contains the group name for this node.
+            // Since our deepest group is 'symbol', raw.g will be the stock symbol for leaf nodes!
+            const stock = stocks.find(s => s.symbol === raw.g);
             
-            // If this node aggregates multiple stocks (i.e. Sector node), make it transparent 
-            // so it doesn't block the actual stock nodes (Symbol nodes).
-            if (raw.l === 0 || raw.l === 1 || arr.length > 1) {
-               return 'transparent';
-            }
+            // If we can't find a matching stock, this is a Sector group node. Make it transparent.
+            if (!stock) return 'transparent';
 
-            const leaf = arr[0] || raw;
-            const chg = leaf.change || 0;
+            const chg = stock.changePct || 0;
             
             if (chg >= 2) return '#22c55e'; // strong green
             if (chg > 0) return '#4ade80';  // weak green
@@ -2299,19 +2295,13 @@ function renderStockTreemap(stocks) {
               const raw = ctx.raw;
               if (!raw) return '';
               
-              const dataItems = raw._data || raw.data || [];
-              const arr = Array.isArray(dataItems) ? dataItems : [dataItems];
-              
-              // Don't label Sector nodes
-              if (raw.l === 0 || raw.l === 1 || arr.length > 1) {
-                 return '';
-              }
+              const stock = stocks.find(s => s.symbol === raw.g);
+              if (!stock) return ''; // Don't label Sector nodes
 
-              const leaf = arr[0] || raw;
-              const chg = leaf.change || 0;
+              const chg = stock.changePct || 0;
               return [
-                leaf.symbol || 'N/A', 
-                `₹${leaf.last || 0}`, 
+                stock.symbol, 
+                `₹${stock.last || 0}`, 
                 (chg > 0 ? '+' : '') + chg.toFixed(2) + '%'
               ];
             }

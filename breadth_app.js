@@ -2267,13 +2267,18 @@ function renderStockTreemap(stocks) {
           borderColor: '#070a11', // Matches bg-primary
           backgroundColor: (ctx) => {
             if (ctx.type !== 'data') return 'transparent';
-            const data = ctx.raw?._data || ctx.raw;
-            if (!data) return '#64748b';
+            const item = ctx.raw;
+            if (!item || !item._data) return '#64748b';
             
-            // If it's a sector grouping node (has children), transparent inner bg so leaf nodes show
-            if (data.children || data.children === true || Array.isArray(data)) return 'transparent';
+            // In chartjs-chart-treemap, _data contains the array of original objects for this node
+            const dataArr = Array.isArray(item._data) ? item._data : [item._data];
+            
+            // If this node represents multiple stocks (Sector node), make it transparent
+            if (dataArr.length > 1) return 'transparent';
 
-            const chg = data.change || 0;
+            // It's a leaf node (single stock)
+            const leaf = dataArr[0];
+            const chg = leaf.change || 0;
             if (chg >= 2) return 'rgba(34, 197, 94, 0.9)'; // strong green
             if (chg > 0) return 'rgba(34, 197, 94, 0.6)';  // weak green
             if (chg <= -2) return 'rgba(239, 68, 68, 0.9)'; // strong red
@@ -2288,12 +2293,19 @@ function renderStockTreemap(stocks) {
             font: { family: 'Outfit', size: 12, weight: '600' },
             formatter: (ctx) => {
               if (ctx.type !== 'data') return '';
-              const data = ctx.raw?._data || ctx.raw;
-              if (!data || data.children || Array.isArray(data)) return ''; // don't label sector boxes internally
-              const chg = data.change || 0;
+              const item = ctx.raw;
+              if (!item || !item._data) return '';
+              
+              const dataArr = Array.isArray(item._data) ? item._data : [item._data];
+              
+              // Don't label the sector node internally
+              if (dataArr.length > 1) return ''; 
+
+              const leaf = dataArr[0];
+              const chg = leaf.change || 0;
               return [
-                data.symbol, 
-                `₹${data.last || 0}`, 
+                leaf.symbol, 
+                `₹${leaf.last || 0}`, 
                 (chg > 0 ? '+' : '') + chg.toFixed(2) + '%'
               ];
             }

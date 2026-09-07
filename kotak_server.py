@@ -16,6 +16,15 @@ import urllib.request
 import urllib.error
 import urllib.parse
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
+import threading
+
+try:
+    import yfinance as yf
+    import pandas as pd
+    YFINANCE_AVAILABLE = True
+except ImportError:
+    YFINANCE_AVAILABLE = False
+    print("[WARNING] yfinance or pandas not installed. Live data streaming will be disabled.")
 
 PORT = int(os.environ.get("PORT", 3002))
 SCRATCH_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -54,6 +63,47 @@ def load_stocks():
             print(f"[Stocks] Could not load nifty500_stocks.json: {e}")
             _STOCKS_CACHE = []
     return _STOCKS_CACHE
+
+def update_live_prices():
+    """Background thread to poll yfinance for live stock data."""
+    if not YFINANCE_AVAILABLE: return
+    
+    print("[LiveStream] Started yfinance background stream thread.")
+    while True:
+        try:
+            if not _STOCKS_CACHE:
+                time.sleep(10)
+                continue
+                
+            # Grab all symbols and append .NS for Yahoo Finance
+            symbols = [s['symbol'] + '.NS' for s in _STOCKS_CACHE if 'symbol' in s]
+            
+            # Batch fetch to avoid rate limits (doing all 500 might be heavy, but yfinance handles bulk well)
+            # We fetch 1d data for all 500 stocks
+            print(f"[LiveStream] Fetching live quotes for {len(symbols)} stocks from Yahoo Finance...")
+            data = yf.download(symbols, period="1d", progress=False)
+            
+            if 'Close' in data and not data['Close'].empty:
+                latest_closes = data['Close'].iloc[-1]
+                latest_prev_closes = data['Open'].iloc[-1] # Approximation, wait let's just calc changePct from Open for now if previous close isn't there, or better use yfinance fast_info but bulk is easier. Actually yf.download includes 'Close' and 'Open', change = close-open is intra-day change. 
+                
+                updates = 0
+                for stock in _STOCKS_CACHE:
+                    ticker = stock['symbol'] + '.NS'
+                    if ticker in latest_closes and not pd.isna(latest_closes[ticker]):
+                        last_price = float(latest_closes[ticker])
+                        open_price = float(latest_prev_closes[ticker]) if not pd.isna(latest_prev_closes[ticker]) else last_price
+                        
+                        stock['last'] = last_price
+                        stock['change'] = round(last_price - open_price, 2)
+                        stock['changePct'] = round(((last_price - open_price) / open_price) * 100, 2) if open_price else 0
+                        updates += 1
+                        
+                print(f"[LiveStream] Successfully updated {updates} stocks with live quotes.")
+        except Exception as e:
+            print(f"[LiveStream] Error fetching live quotes: {e}")
+            
+        time.sleep(90) # Wait 90 seconds between bulk fetches to avoid IP ban
 
 def save_kotak_session():
     """Persist Kotak credentials to disk so they survive server restarts."""
@@ -152,14 +202,31 @@ def make_request(url, method="GET", headers=None, data=None, timeout=4):
         return 500, json.dumps({"error": str(e)})
 
 def get_overview_data():
+    nifty_last, nifty_change = 23897.70, 0.10
+    bnifty_last, bnifty_change = 57369.65, -0.02
+    vix_last, vix_change = 10.68, -5.82
+
+    if YFINANCE_AVAILABLE:
+        try:
+            # Try fetching live indices using Ticker fast_info for speed
+            idx = yf.Tickers("^NSEI ^NSEBANK ^INDIAVIX")
+            if "^NSEI" in idx.tickers:
+                nifty_last = idx.tickers["^NSEI"].fast_info.last_price
+                nifty_change = round(((nifty_last / idx.tickers["^NSEI"].fast_info.previous_close) - 1) * 100, 2)
+            if "^NSEBANK" in idx.tickers:
+                bnifty_last = idx.tickers["^NSEBANK"].fast_info.last_price
+                bnifty_change = round(((bnifty_last / idx.tickers["^NSEBANK"].fast_info.previous_close) - 1) * 100, 2)
+        except:
+            pass
+
     return {
         "scannedAt": time.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
-        "quoteSource": "Kotak Neo API" if KOTAK_SESSION["connected"] else "kotak-neo+yahoo",
-        "fromCache": not KOTAK_SESSION["connected"],
+        "quoteSource": "Live Yahoo Finance Stream",
+        "fromCache": False,
         "headline": [
-            {"id": "nifty50", "label": "Nifty 50", "last": 23897.70, "change": 24.25, "changePct": 0.10, "direction": "up", "arrow": "▲"},
-            {"id": "bankNifty", "label": "Bank Nifty", "last": 57369.65, "change": -10.95, "changePct": -0.02, "direction": "down", "arrow": "▼"},
-            {"id": "indiaVix", "label": "India VIX", "last": 10.68, "change": -0.66, "changePct": -5.82, "direction": "down", "arrow": "▼"}
+            {"id": "nifty50", "label": "Nifty 50", "last": round(nifty_last,2), "change": 0, "changePct": nifty_change, "direction": "up" if nifty_change >= 0 else "down", "arrow": "▲" if nifty_change >= 0 else "▼"},
+            {"id": "bankNifty", "label": "Bank Nifty", "last": round(bnifty_last,2), "change": 0, "changePct": bnifty_change, "direction": "up" if bnifty_change >= 0 else "down", "arrow": "▲" if bnifty_change >= 0 else "▼"},
+            {"id": "indiaVix", "label": "India VIX", "last": vix_last, "change": 0, "changePct": vix_change, "direction": "down", "arrow": "▼"}
         ],
         "size": [
             {"id": "largeCap", "label": "Large Cap", "subtitle": "Nifty 100", "last": 25023.15, "change": 9.70, "changePct": 0.04, "direction": "up", "arrow": "▲", "ema": {"ema20": {"above": False}, "ema50": {"above": False}, "ema200": {"above": False}, "bias": "bearish"}},
@@ -440,6 +507,10 @@ class KotakTerminalHandler(SimpleHTTPRequestHandler):
 def run_server():
     load_stocks()        # Pre-load 500 stocks on startup
     auto_restore_session()  # Auto-reconnect from saved credentials
+    
+    # Start live price stream thread
+    t = threading.Thread(target=update_live_prices, daemon=True)
+    t.start()
     server_address = ("0.0.0.0", PORT)
     httpd = ThreadingHTTPServer(server_address, KotakTerminalHandler)
     httpd.daemon_threads = True

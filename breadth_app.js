@@ -2252,7 +2252,6 @@ function renderStockTreemap(stocks) {
     // Guard against missing plugin if CDN failed to load
     if (!Chart.registry || !Chart.registry.plugins || !Chart.registry.plugins.get('treemap')) {
       console.warn('ChartJS Treemap plugin not loaded or registered yet.');
-      // return; // we won't return, we'll try to instantiate anyway in case registry structure differs
     }
 
     window.stockTreemapInstance = new Chart(ctx, {
@@ -2261,26 +2260,32 @@ function renderStockTreemap(stocks) {
         datasets: [{
           tree: treeData,
           key: 'value',
-          groups: ['sector'], // Group ONLY by sector so leaf nodes are the actual stocks!
+          groups: ['sector', 'symbol'],
           spacing: 1,
           borderWidth: 1,
           borderColor: '#070a11', // Matches bg-primary
           backgroundColor: (ctx) => {
             if (ctx.type !== 'data') return 'transparent';
-            const item = ctx.raw;
-            if (!item) return '#64748b';
+            const raw = ctx.raw;
+            if (!raw) return '#64748b';
             
-            // If it has children or 'sector' is the only group level and it has a sum, it's the group node.
-            // In chartjs-chart-treemap, group nodes have `children` or their _data is an array.
-            if (item.children || Array.isArray(item._data)) return 'transparent';
+            // Get the underlying data items
+            const dataItems = raw._data || raw.data || [];
+            const arr = Array.isArray(dataItems) ? dataItems : [dataItems];
+            
+            // If this node aggregates multiple stocks (i.e. Sector node), make it transparent 
+            // so it doesn't block the actual stock nodes (Symbol nodes).
+            if (raw.l === 0 || raw.l === 1 || arr.length > 1) {
+               return 'transparent';
+            }
 
-            const leaf = item._data || item;
+            const leaf = arr[0] || raw;
             const chg = leaf.change || 0;
             
-            if (chg >= 2) return 'rgba(34, 197, 94, 0.9)'; // strong green
-            if (chg > 0) return 'rgba(34, 197, 94, 0.6)';  // weak green
-            if (chg <= -2) return 'rgba(239, 68, 68, 0.9)'; // strong red
-            if (chg < 0) return 'rgba(239, 68, 68, 0.6)';  // weak red
+            if (chg >= 2) return '#22c55e'; // strong green
+            if (chg > 0) return '#4ade80';  // weak green
+            if (chg <= -2) return '#ef4444'; // strong red
+            if (chg < 0) return '#f87171';  // weak red
             return '#64748b'; // neutral grey
           },
           labels: {
@@ -2291,16 +2296,21 @@ function renderStockTreemap(stocks) {
             font: { family: 'Outfit', size: 12, weight: '600' },
             formatter: (ctx) => {
               if (ctx.type !== 'data') return '';
-              const item = ctx.raw;
-              if (!item) return '';
+              const raw = ctx.raw;
+              if (!raw) return '';
               
-              // Don't label the sector node internally
-              if (item.children || Array.isArray(item._data)) return ''; 
+              const dataItems = raw._data || raw.data || [];
+              const arr = Array.isArray(dataItems) ? dataItems : [dataItems];
+              
+              // Don't label Sector nodes
+              if (raw.l === 0 || raw.l === 1 || arr.length > 1) {
+                 return '';
+              }
 
-              const leaf = item._data || item;
+              const leaf = arr[0] || raw;
               const chg = leaf.change || 0;
               return [
-                leaf.symbol || 'Unknown', 
+                leaf.symbol || 'N/A', 
                 `₹${leaf.last || 0}`, 
                 (chg > 0 ? '+' : '') + chg.toFixed(2) + '%'
               ];

@@ -2269,15 +2269,28 @@ function renderStockTreemap(stocks) {
             const raw = ctx.raw;
             if (!raw) return '#64748b';
             
-            // In chartjs-chart-treemap, raw.g contains the group name for this node.
-            // Since our deepest group is 'symbol', raw.g will be the stock symbol for leaf nodes!
-            const stock = stocks.find(s => s.symbol === raw.g);
+            let chg = null;
             
-            // If we can't find a matching stock, this is a Sector group node. Make it transparent.
-            if (!stock) return 'transparent';
+            // Strategy 1: Find by raw.g (Symbol group name)
+            if (raw.g) {
+               const stock = stocks.find(s => s.symbol === raw.g);
+               if (stock) chg = stock.changePct !== undefined ? stock.changePct : stock.change;
+            }
 
-            const chg = stock.changePct || 0;
-            
+            // Strategy 2: Parse raw._data
+            if (chg === null && raw._data) {
+               const arr = Array.isArray(raw._data) ? raw._data : [raw._data];
+               if (arr.length === 1) {
+                  const item = arr[0];
+                  chg = item.change !== undefined ? item.change : item.changePct;
+               } else {
+                  return 'transparent'; // It's a Sector group node with multiple children
+               }
+            }
+
+            // If we couldn't resolve a stock for this node, it's likely a Sector node.
+            if (chg === null || chg === undefined) return 'transparent';
+
             if (chg >= 2) return '#22c55e'; // strong green
             if (chg > 0) return '#4ade80';  // weak green
             if (chg <= -2) return '#ef4444'; // strong red
@@ -2295,15 +2308,35 @@ function renderStockTreemap(stocks) {
               const raw = ctx.raw;
               if (!raw) return '';
               
-              const stock = stocks.find(s => s.symbol === raw.g);
-              if (!stock) return ''; // Don't label Sector nodes
+              let sym = null;
+              let last = null;
+              let chg = null;
 
-              const chg = stock.changePct || 0;
-              return [
-                stock.symbol, 
-                `₹${stock.last || 0}`, 
-                (chg > 0 ? '+' : '') + chg.toFixed(2) + '%'
-              ];
+              if (raw.g) {
+                 const stock = stocks.find(s => s.symbol === raw.g);
+                 if (stock) {
+                    sym = stock.symbol;
+                    last = stock.last;
+                    chg = stock.changePct !== undefined ? stock.changePct : stock.change;
+                 }
+              }
+
+              if (!sym && raw._data) {
+                 const arr = Array.isArray(raw._data) ? raw._data : [raw._data];
+                 if (arr.length === 1) {
+                    const item = arr[0];
+                    sym = item.symbol;
+                    last = item.last;
+                    chg = item.change !== undefined ? item.change : item.changePct;
+                 } else {
+                    return ''; // Group node
+                 }
+              }
+
+              if (!sym) return '';
+
+              const chgStr = (chg > 0 ? '+' : '') + (chg || 0).toFixed(2) + '%';
+              return [sym, `₹${last || 0}`, chgStr];
             }
           },
           captions: {

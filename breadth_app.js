@@ -378,9 +378,13 @@ function toggleTheme() {
 // ==========================================
 // NIFTY_CONSTITUENTS is now loaded dynamically from /api/stocks
 // All 500 Nifty 500 stocks are served from nifty500_stocks.json on the server
+
+// To connect to a cloud backend (Render/Heroku), change this from '' to your cloud URL (e.g., 'https://my-server.onrender.com')
+const API_BASE_URL = ''; 
+
 async function fetchStocksData(universe = 'nifty500') {
   try {
-    const resp = await fetch(`/api/stocks?universe=${universe}`);
+    const resp = await fetch(`${API_BASE_URL}/api/stocks?universe=${universe}`);
     if (resp.ok) {
       const data = await resp.json();
       if (data.stocks && data.stocks.length > 0) return data.stocks;
@@ -407,7 +411,7 @@ async function fetchStocksData(universe = 'nifty500') {
 
 async function fetchOverviewData(force = false) {
   try {
-    const url = force ? '/api/overview?refresh=1' : '/api/overview';
+    const url = force ? `${API_BASE_URL}/api/overview?refresh=1` : `${API_BASE_URL}/api/overview`;
     const resp = await fetch(url);
     if (resp.ok) {
       const data = await resp.json();
@@ -430,7 +434,7 @@ async function fetchOverviewData(force = false) {
 
 async function fetchBreadthData(universe = 'nifty50', force = false) {
   try {
-    const url = force ? `/api/breadth?universe=${universe}&refresh=1` : `/api/breadth?universe=${universe}`;
+    const url = force ? `${API_BASE_URL}/api/breadth?universe=${universe}&refresh=1` : `${API_BASE_URL}/api/breadth?universe=${universe}`;
     const resp = await fetch(url);
     if (resp.ok) {
       const data = await resp.json();

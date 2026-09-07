@@ -267,9 +267,10 @@ class KotakTerminalHandler(SimpleHTTPRequestHandler):
         super().__init__(*args, directory=SCRATCH_DIR, **kwargs)
 
     def end_headers(self):
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, neo-fin-key")
+        # Enable CORS for external API usage (e.g., from GitHub Pages to Render cloud)
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
         super().end_headers()
 
     def do_OPTIONS(self):

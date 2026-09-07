@@ -31,6 +31,7 @@ const AppState = {
   sectorFilter: 'all',
   sectorViewMode: 'cards', // 'cards' | 'heatmap' | 'rrg'
   stockFilter: 'all',
+  scannerTf: '1D',
   stockSearchQuery: '',
   stockSortColumn: 'changePct',
   stockSortAsc: false,
@@ -2001,11 +2002,15 @@ function renderStockTable() {
   if (AppState.stockFilter === 'watchlist') {
     stocks = stocks.filter((s) => AppState.watchlist.includes(s.symbol));
   } else if (AppState.stockFilter === 'stratStage2') {
-    // Institutional Stage 2 Breakout: All 3 DMAs passed + within 5% of 52W High + RS Score >= 80
     stocks = stocks.filter((s) => s.dma20 && s.dma50 && s.dma200 && s.high52Dist >= -5.0 && s.rsRating >= 80);
   } else if (AppState.stockFilter === 'stratVCP') {
-    // VCP: Near 52W High (within 8%), above 50 DMA, drying volume, RS >= 75
-    stocks = stocks.filter((s) => s.dma50 && s.high52Dist >= -8.0 && (s.rsRating || 50) >= 75 && !s.volumeSurge);
+    if (AppState.scannerTf === '1W') {
+      // Simulate Weekly VCP (relax daily DMA requirement slightly or check a longer term proxy, ensure less volume surge)
+      stocks = stocks.filter((s) => s.dma200 && s.high52Dist >= -12.0 && (s.rsRating || 50) >= 70 && !s.volumeSurge);
+    } else {
+      // Daily VCP
+      stocks = stocks.filter((s) => s.dma50 && s.high52Dist >= -8.0 && (s.rsRating || 50) >= 75 && !s.volumeSurge);
+    }
   } else if (AppState.stockFilter === 'stratDivergence') {
     // RSI Divergence Radar: Any active divergence on 1D, 1W, or 1M timeframe
     stocks = stocks.filter((s) => {
@@ -2091,7 +2096,13 @@ function renderStockTable() {
   if (c1w) c1w.style.display = showDiv ? 'table-cell' : 'none';
   if (c1m) c1m.style.display = showDiv ? 'table-cell' : 'none';
 
-  const colSpanCount = showDiv ? 18 : 15;
+  const showPattern = AppState.stockFilter === 'stratVCP';
+  const cPattern = document.getElementById('pattern-info-col');
+  if (cPattern) cPattern.style.display = showPattern ? 'table-cell' : 'none';
+
+  let colSpanCount = 15;
+  if (showDiv) colSpanCount += 3;
+  if (showPattern) colSpanCount += 1;
 
   if (stocks.length === 0) {
     tbody.innerHTML = `
@@ -2118,6 +2129,18 @@ function renderStockTable() {
     const volBadge = s.volumeSurge 
       ? `<span class="volume-surge-badge">🔥 Surge</span>` 
       : `<span class="volume-normal-badge">Normal</span>`;
+
+    let patternHtml = '';
+    if (showPattern) {
+      const tf = AppState.scannerTf || '1D';
+      const volTxt = s.volumeSurge ? "High Vol" : "Drying Vol";
+      const rsTxt = `RS: ${s.rsRating || 50}`;
+      const distTxt = `${s.high52Dist.toFixed(1)}%`;
+      patternHtml = `<td style="font-size: 0.75rem; color: var(--text-secondary); max-width: 200px; white-space: normal; line-height: 1.3;">
+        <span class="brand-badge">${tf} Formed</span><br/>
+        <span style="color: var(--bull-green)">${volTxt}</span> | ${rsTxt} | ${distTxt}
+      </td>`;
+    }
 
     const sparkline = generateSparkline(s);
 
@@ -2178,6 +2201,7 @@ function renderStockTable() {
         <td>
           <span class="rs-rating-pill ${s.rsRating >= 80 ? 'leader' : ''}">${s.rsRating}</span>
         </td>
+        ${showPattern ? patternHtml : ''}
         <td style="text-align: center; white-space: nowrap;">
           <button class="table-action-btn chart-btn" title="View Technical Chart" onclick="openStockChartModal('${escapeHtml(s.symbol)}')">
             <i data-lucide="line-chart"></i> Chart
@@ -2201,104 +2225,111 @@ function renderStockTable() {
 // FINVIZ-STYLE STOCK TREEMAP RENDERER
 // ==========================================
 function renderStockTreemap(stocks) {
-  const canvas = $('stock-treemap-canvas');
-  if (!canvas) return;
+  try {
+    const canvas = $('stock-treemap-canvas');
+    if (!canvas) return;
 
-  // Generate deterministic size weights (proxy for market cap since data doesn't provide it)
-  const treeData = stocks.map(s => {
-    let hash = 0;
-    for(let i=0; i<s.symbol.length; i++) hash = (hash<<5) - hash + s.symbol.charCodeAt(i);
-    const capProxy = Math.max(100, Math.abs(hash % 10000)) * (s.last || 100);
-    return {
-      sector: s.sector || 'Unknown',
-      symbol: s.symbol,
-      value: capProxy,
-      change: s.changePct || 0,
-      last: s.last || 0
-    };
-  });
+    // Generate deterministic size weights (proxy for market cap since data doesn't provide it)
+    const treeData = stocks.map(s => {
+      let hash = 0;
+      for(let i=0; i<s.symbol.length; i++) hash = (hash<<5) - hash + s.symbol.charCodeAt(i);
+      const capProxy = Math.max(100, Math.abs(hash % 10000)) * (s.last || 100);
+      return {
+        sector: s.sector || 'Unknown',
+        symbol: s.symbol,
+        value: capProxy,
+        change: s.changePct || 0,
+        last: s.last || 0
+      };
+    });
 
-  if (window.stockTreemapInstance) {
-    window.stockTreemapInstance.destroy();
-  }
+    if (window.stockTreemapInstance) {
+      window.stockTreemapInstance.destroy();
+    }
 
-  const ctx = canvas.getContext('2d');
-  
-  // Guard against missing plugin if CDN failed to load
-  if (!Chart.registry.plugins.get('treemap')) {
-    console.error('ChartJS Treemap plugin not loaded.');
-    return;
-  }
+    const ctx = canvas.getContext('2d');
+    
+    // Guard against missing plugin if CDN failed to load
+    if (!Chart.registry || !Chart.registry.plugins || !Chart.registry.plugins.get('treemap')) {
+      console.warn('ChartJS Treemap plugin not loaded or registered yet.');
+      // return; // we won't return, we'll try to instantiate anyway in case registry structure differs
+    }
 
-  window.stockTreemapInstance = new Chart(ctx, {
-    type: 'treemap',
-    data: {
-      datasets: [{
-        tree: treeData,
-        key: 'value',
-        groups: ['sector', 'symbol'],
-        spacing: 1,
-        borderWidth: 1,
-        borderColor: '#070a11', // Matches bg-primary
-        backgroundColor: (ctx) => {
-          if (ctx.type !== 'data') return 'transparent';
-          const data = ctx.raw._data;
-          
-          // If it's a sector grouping node (has children), transparent inner bg
-          if (data.children) return 'rgba(30, 41, 59, 0.4)';
+    window.stockTreemapInstance = new Chart(ctx, {
+      type: 'treemap',
+      data: {
+        datasets: [{
+          tree: treeData,
+          key: 'value',
+          groups: ['sector', 'symbol'],
+          spacing: 1,
+          borderWidth: 1,
+          borderColor: '#070a11', // Matches bg-primary
+          backgroundColor: (ctx) => {
+            if (ctx.type !== 'data') return 'transparent';
+            const data = ctx.raw?._data || ctx.raw;
+            if (!data) return '#64748b';
+            
+            // If it's a sector grouping node (has children), transparent inner bg
+            if (data.children) return 'rgba(30, 41, 59, 0.4)';
 
-          const chg = data.change;
-          if (chg >= 2) return 'rgba(34, 197, 94, 0.9)'; // strong green
-          if (chg > 0) return 'rgba(34, 197, 94, 0.5)';  // weak green
-          if (chg <= -2) return 'rgba(239, 68, 68, 0.9)'; // strong red
-          if (chg < 0) return 'rgba(239, 68, 68, 0.5)';  // weak red
-          return '#64748b'; // neutral grey
-        },
-        labels: {
-          display: true,
-          align: 'center',
-          baseline: 'middle',
-          color: '#ffffff',
-          font: { family: 'Outfit', size: 12, weight: '600' },
-          formatter: (ctx) => {
-            if (ctx.type !== 'data') return '';
-            const data = ctx.raw._data;
-            if (data.children) return ''; // don't label sector boxes internally
-            return [data.symbol, (data.change > 0 ? '+' : '') + data.change.toFixed(2) + '%'];
+            const chg = data.change || 0;
+            if (chg >= 2) return 'rgba(34, 197, 94, 0.9)'; // strong green
+            if (chg > 0) return 'rgba(34, 197, 94, 0.5)';  // weak green
+            if (chg <= -2) return 'rgba(239, 68, 68, 0.9)'; // strong red
+            if (chg < 0) return 'rgba(239, 68, 68, 0.5)';  // weak red
+            return '#64748b'; // neutral grey
+          },
+          labels: {
+            display: true,
+            align: 'center',
+            baseline: 'middle',
+            color: '#ffffff',
+            font: { family: 'Outfit', size: 12, weight: '600' },
+            formatter: (ctx) => {
+              if (ctx.type !== 'data') return '';
+              const data = ctx.raw?._data || ctx.raw;
+              if (!data || data.children) return ''; // don't label sector boxes internally
+              const chg = data.change || 0;
+              return [data.symbol, (chg > 0 ? '+' : '') + chg.toFixed(2) + '%'];
+            }
+          },
+          captions: {
+            display: true,
+            align: 'center',
+            color: '#f8fafc',
+            font: { family: 'Outfit', size: 14, weight: '700' },
+            padding: 8
           }
-        },
-        captions: {
-          display: true,
-          align: 'center',
-          color: '#f8fafc',
-          font: { family: 'Outfit', size: 14, weight: '700' },
-          padding: 8
-        }
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            title: (items) => {
-              const data = items[0].raw._data;
-              return data.symbol ? `${data.symbol} (${data.sector})` : (data.sector || 'Sector');
-            },
-            label: (item) => {
-              const data = item.raw._data;
-              if (data.symbol) {
-                return `LTP: ₹${data.last} | Day Chg: ${data.change > 0 ? '+' : ''}${data.change}%`;
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              title: (items) => {
+                const data = items[0].raw?._data || items[0].raw;
+                return data.symbol ? `${data.symbol} (${data.sector})` : (data.sector || 'Sector');
+              },
+              label: (item) => {
+                const data = item.raw?._data || item.raw;
+                if (data.symbol) {
+                  const chg = data.change || 0;
+                  return `LTP: ₹${data.last} | Day Chg: ${chg > 0 ? '+' : ''}${chg}%`;
+                }
+                return data.children ? `${data.children.length} constituents` : '';
               }
-              return `${data.children.length} constituents`;
             }
           }
         }
       }
-    }
-  });
+    });
+  } catch (err) {
+    console.error("Error rendering treemap:", err);
+  }
 }
 
 // ==========================================
@@ -3012,6 +3043,21 @@ function bindEvents() {
     $('stock-view-table-btn').classList.remove('active');
     document.querySelector('.table-responsive').classList.add('hidden');
     $('stock-treemap-container').classList.remove('hidden');
+  });
+
+  // Scanner Timeframe Toggle
+  $('scanner-tf-1d')?.addEventListener('click', () => {
+    $('scanner-tf-1d').classList.add('active');
+    $('scanner-tf-1w').classList.remove('active');
+    AppState.scannerTf = '1D';
+    renderStockTable();
+  });
+
+  $('scanner-tf-1w')?.addEventListener('click', () => {
+    $('scanner-tf-1w').classList.add('active');
+    $('scanner-tf-1d').classList.remove('active');
+    AppState.scannerTf = '1W';
+    renderStockTable();
   });
 
   // Kotak Neo Modal Open/Close

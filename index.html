@@ -10,7 +10,7 @@
   <title>Market Breadth Intelligence Terminal | Professional Market Health Cockpit</title>
   
   <!-- CSS Stylesheets -->
-  <link rel="stylesheet" href="breadth_app.css?v=7" />
+  <link rel="stylesheet" href="breadth_app.css?v=8" />
   
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -627,6 +627,11 @@
           <button id="stock-view-table-btn" class="toggle-mode-btn active" title="Table View"><i data-lucide="list"></i> Table</button>
           <button id="stock-view-treemap-btn" class="toggle-mode-btn" title="Finviz-Style Treemap"><i data-lucide="layout"></i> Treemap</button>
         </div>
+        
+        <div class="view-mode-toggle scanner-tf-toggle" style="margin-left: 0.5rem;">
+          <button class="toggle-mode-btn active" id="scanner-tf-1d" title="Daily Timeframe">1D</button>
+          <button class="toggle-mode-btn" id="scanner-tf-1w" title="Weekly Timeframe (Simulated)">1W</button>
+        </div>
 
         <div class="search-wrapper">
           <i data-lucide="search" class="search-icon"></i>
@@ -678,6 +683,7 @@
               <th data-sort="dma200" style="text-align: center;" title="Price > 200 DMA">200 DMA ↕</th>
               <th data-sort="high52Dist">From 52W High ↕</th>
               <th data-sort="rsRating">RS Score ↕</th>
+              <th id="pattern-info-col" style="display:none; text-align: left; max-width: 200px;">Pattern Details</th>
               <th style="text-align: center;">Action</th>
             </tr>
           </thead>
@@ -1097,6 +1103,6 @@
   <div id="toast-container" class="toast-container"></div>
 
   <!-- App Logic Engine -->
-  <script src="breadth_app.js?v=7"></script>
+  <script src="breadth_app.js?v=8"></script>
 </body>
 </html>

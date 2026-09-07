@@ -78,28 +78,33 @@ def update_live_prices():
             # Grab all symbols and append .NS for Yahoo Finance
             symbols = [s['symbol'] + '.NS' for s in _STOCKS_CACHE if 'symbol' in s]
             
-            # Batch fetch to avoid rate limits (doing all 500 might be heavy, but yfinance handles bulk well)
-            # We fetch 1d data for all 500 stocks
+            # Batch fetch to avoid rate limits
             print(f"[LiveStream] Fetching live quotes for {len(symbols)} stocks from Yahoo Finance...")
-            data = yf.download(symbols, period="1d", progress=False)
+            data = yf.download(symbols, period="5d", progress=False)
             
             if 'Close' in data and not data['Close'].empty:
                 latest_closes = data['Close'].iloc[-1]
-                latest_prev_closes = data['Open'].iloc[-1] # Approximation, wait let's just calc changePct from Open for now if previous close isn't there, or better use yfinance fast_info but bulk is easier. Actually yf.download includes 'Close' and 'Open', change = close-open is intra-day change. 
+                
+                # To get previous close, we look at the second to last row if available
+                prev_closes = data['Close'].iloc[-2] if len(data['Close']) > 1 else latest_closes
+                latest_opens = data['Open'].iloc[-1]
                 
                 updates = 0
                 for stock in _STOCKS_CACHE:
                     ticker = stock['symbol'] + '.NS'
                     if ticker in latest_closes and not pd.isna(latest_closes[ticker]):
                         last_price = float(latest_closes[ticker])
-                        open_price = float(latest_prev_closes[ticker]) if not pd.isna(latest_prev_closes[ticker]) else last_price
+                        open_price = float(latest_opens[ticker]) if not pd.isna(latest_opens[ticker]) else last_price
+                        prev_close = float(prev_closes[ticker]) if not pd.isna(prev_closes[ticker]) else open_price
                         
                         stock['last'] = last_price
-                        stock['change'] = round(last_price - open_price, 2)
-                        stock['changePct'] = round(((last_price - open_price) / open_price) * 100, 2) if open_price else 0
+                        stock['change'] = round(last_price - prev_close, 2)
+                        stock['changePct'] = round(((last_price - prev_close) / prev_close) * 100, 2) if prev_close else 0
+                        stock['gapPct'] = round(((open_price - prev_close) / prev_close) * 100, 2) if prev_close else 0
+                        
                         updates += 1
                         
-                print(f"[LiveStream] Successfully updated {updates} stocks with live quotes.")
+                print(f"[LiveStream] Successfully updated {updates} stocks with live quotes and Gap %.")
         except Exception as e:
             print(f"[LiveStream] Error fetching live quotes: {e}")
             
@@ -269,23 +274,25 @@ def get_breadth_data(universe="nifty50"):
     b50_vals = []
     b200_vals = []
 
+    # Calculate real breadth from current _STOCKS_CACHE snapshot
+    total_stocks = len(_STOCKS_CACHE) if _STOCKS_CACHE else 1
+    dma20_count = sum(1 for s in _STOCKS_CACHE if s.get('dma20', False)) if _STOCKS_CACHE else 0
+    dma50_count = sum(1 for s in _STOCKS_CACHE if s.get('dma50', False)) if _STOCKS_CACHE else 0
+    dma200_count = sum(1 for s in _STOCKS_CACHE if s.get('dma200', False)) if _STOCKS_CACHE else 0
+    
+    cur20 = round((dma20_count / total_stocks) * 100)
+    cur50 = round((dma50_count / total_stocks) * 100)
+    cur200 = round((dma200_count / total_stocks) * 100)
+    
+    # Generate stable historical series (flat lines representing the snapshot)
     now = time.time()
     for i in range(240, -1, -1):
         d = time.strftime("%Y-%m-%d", time.localtime(now - i * 86400))
         dates.append(d)
-        phase = i / 30.0
-        base_price = 24000.0 + math_sin(phase) * 1200.0 + (240 - i) * 3.5
-        index_vals.append(round(base_price, 2))
-        b20 = max(10, min(95, 45 + math_sin(phase * 1.5) * 35))
-        b50 = max(15, min(90, 48 + math_sin(phase * 1.1) * 28))
-        b200 = max(20, min(85, 52 + math_sin(phase * 0.7) * 22))
-        b20_vals.append(round(b20))
-        b50_vals.append(round(b50))
-        b200_vals.append(round(b200))
-
-    cur20 = b20_vals[-1]
-    cur50 = b50_vals[-1]
-    cur200 = b200_vals[-1]
+        index_vals.append(24000) # Placeholder flat index
+        b20_vals.append(cur20)
+        b50_vals.append(cur50)
+        b200_vals.append(cur200)
 
     posture = "GREEN LIGHT — PRESS"
     tone = "good"
@@ -304,8 +311,8 @@ def get_breadth_data(universe="nifty50"):
         "universe": universe,
         "stockCount": 500 if universe == "nifty500" else 50,
         "asOf": time.strftime("%Y-%m-%d"),
-        "dataSource": "Kotak Neo Live Feed" if KOTAK_SESSION["connected"] else "Kotak Neo / Yahoo",
-        "fromCache": not KOTAK_SESSION["connected"],
+        "dataSource": "Live Yahoo Finance Stream" if YFINANCE_AVAILABLE else "Static Snapshot",
+        "fromCache": False,
         "gauges": {
             "dma20": {"value": cur20, "label": "20 DMA — LEADERS", "subtitle": "Short-term momentum", "arrow": "▲" if cur20 >= 50 else "▼"},
             "dma50": {"value": cur50, "label": "50 DMA — CORE", "subtitle": "Intermediate institutional trend", "arrow": "▲" if cur50 >= 50 else "▼"},

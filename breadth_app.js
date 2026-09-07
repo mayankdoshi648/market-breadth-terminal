@@ -2270,14 +2270,14 @@ function renderStockTreemap(stocks) {
             const data = ctx.raw?._data || ctx.raw;
             if (!data) return '#64748b';
             
-            // If it's a sector grouping node (has children), transparent inner bg
-            if (data.children) return 'rgba(30, 41, 59, 0.4)';
+            // If it's a sector grouping node (has children), transparent inner bg so leaf nodes show
+            if (data.children || data.children === true || Array.isArray(data)) return 'transparent';
 
             const chg = data.change || 0;
             if (chg >= 2) return 'rgba(34, 197, 94, 0.9)'; // strong green
-            if (chg > 0) return 'rgba(34, 197, 94, 0.5)';  // weak green
+            if (chg > 0) return 'rgba(34, 197, 94, 0.6)';  // weak green
             if (chg <= -2) return 'rgba(239, 68, 68, 0.9)'; // strong red
-            if (chg < 0) return 'rgba(239, 68, 68, 0.5)';  // weak red
+            if (chg < 0) return 'rgba(239, 68, 68, 0.6)';  // weak red
             return '#64748b'; // neutral grey
           },
           labels: {
@@ -2289,9 +2289,13 @@ function renderStockTreemap(stocks) {
             formatter: (ctx) => {
               if (ctx.type !== 'data') return '';
               const data = ctx.raw?._data || ctx.raw;
-              if (!data || data.children) return ''; // don't label sector boxes internally
+              if (!data || data.children || Array.isArray(data)) return ''; // don't label sector boxes internally
               const chg = data.change || 0;
-              return [data.symbol, (chg > 0 ? '+' : '') + chg.toFixed(2) + '%'];
+              return [
+                data.symbol, 
+                `₹${data.last || 0}`, 
+                (chg > 0 ? '+' : '') + chg.toFixed(2) + '%'
+              ];
             }
           },
           captions: {

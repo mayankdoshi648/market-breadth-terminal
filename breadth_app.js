@@ -2758,7 +2758,7 @@ const DhanHQ = {
 
   async checkSession() {
     try {
-      const resp = await fetch('/api/dhan/status');
+      const resp = await fetch(`${API_BASE_URL}/api/dhan/status`);
       if (resp.ok) {
         const data = await resp.json();
         if (data.connected) {
@@ -2778,7 +2778,7 @@ const DhanHQ = {
 
   async disconnect() {
     try {
-      await fetch('/api/dhan/disconnect', { method: 'POST' });
+      await fetch(`${API_BASE_URL}/api/dhan/disconnect`, { method: 'POST' });
     } catch { /* ignore */ }
 
     localStorage.removeItem(this.sessionKey);
@@ -2817,7 +2817,7 @@ const DhanHQ = {
     this.log('🚀 Initiating DhanHQ API Session Authentication...');
 
     try {
-      const resp = await fetch('/api/dhan/auth', {
+      const resp = await fetch(`${API_BASE_URL}/api/dhan/auth`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clientId, accessToken })

@@ -29,49 +29,106 @@ except ImportError:
 PORT = int(os.environ.get("PORT", 3002))
 SCRATCH_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Kotak Neo In-Memory Session
-KOTAK_SESSION = {
+# DhanHQ API In-Memory Session
+DHAN_SESSION = {
     "configured": False,
     "connected": False,
+    "clientId": None,
     "accessToken": None,
-    "sessionToken": None,
-    "consumerKey": None,
-    "consumerSecret": None,
-    "mobile": None,
-    "mpin": None,
-    "totpSecret": None,
     "env": "production",
     "lastConnected": None,
     "error": None
 }
 
-SESSION_FILE = os.path.join(SCRATCH_DIR, "kotak_session.json")
+SESSION_FILE = os.path.join(SCRATCH_DIR, "dhan_session.json")
 STOCKS_FILE = os.path.join(SCRATCH_DIR, "nifty500_stocks.json")
 
-# Cache for stocks data
+# Cache for stocks data and Dhan Security IDs
 _STOCKS_CACHE = None
+_DHAN_SECURITY_MAP = {}
+dhan_instance = None
 
 def load_stocks():
-    """Load Nifty 500 stocks from JSON file (cached)."""
-    global _STOCKS_CACHE
+    """Load Nifty 500 stocks from JSON file (cached) and map Dhan security IDs."""
+    global _STOCKS_CACHE, _DHAN_SECURITY_MAP
     if _STOCKS_CACHE is None:
         try:
             with open(STOCKS_FILE, "r", encoding="utf-8") as f:
                 _STOCKS_CACHE = json.load(f)
             print(f"[Stocks] Loaded {len(_STOCKS_CACHE)} stocks from nifty500_stocks.json")
+            
+            # Build Dhan Mapping
+            try:
+                import pandas as pd
+                url = "https://images.dhan.co/api-data/api-scrip-master.csv"
+                print("[Dhan] Downloading Security Master from Dhan...")
+                df = pd.read_csv(url, low_memory=False)
+                nse_eq = df[(df['SEM_EXM_EXCH_ID'] == 'NSE') & (df['SEM_SERIES'] == 'EQ')]
+                _DHAN_SECURITY_MAP = dict(zip(nse_eq['SEM_TRADING_SYMBOL'], nse_eq['SEM_SMST_SECURITY_ID']))
+                print(f"[Dhan] Mapped {len(_DHAN_SECURITY_MAP)} NSE Equity instruments.")
+            except Exception as e:
+                print(f"[Dhan Error] Could not build security map: {e}")
+                
         except Exception as e:
             print(f"[Stocks] Could not load nifty500_stocks.json: {e}")
             _STOCKS_CACHE = []
     return _STOCKS_CACHE
 
 def update_live_prices():
-    """Background thread to poll yfinance for live stock data."""
-    if not YFINANCE_AVAILABLE: return
-    
-    print("[LiveStream] Started yfinance background stream thread.")
+    """Background thread to poll Dhan API (or yfinance fallback) for live stock data."""
+    print("[LiveStream] Started background stream thread.")
     while True:
         try:
             if not _STOCKS_CACHE:
+                time.sleep(10)
+                continue
+                
+            # If DhanHQ is connected, use it!
+            if DHAN_SESSION["connected"] and dhan_instance:
+                try:
+                    securities = {"NSE_EQ": []}
+                    reverse_map = {} # map security ID back to stock ref
+                    
+                    for stock in _STOCKS_CACHE:
+                        symbol = stock.get("symbol")
+                        if symbol in _DHAN_SECURITY_MAP:
+                            sec_id = str(_DHAN_SECURITY_MAP[symbol])
+                            securities["NSE_EQ"].append(sec_id)
+                            reverse_map[sec_id] = stock
+                    
+                    if securities["NSE_EQ"]:
+                        print(f"[Dhan Live] Fetching quotes for {len(securities['NSE_EQ'])} stocks...")
+                        
+                        # Dhan API has limits, we might need to batch them in chunks of 100
+                        updates = 0
+                        chunk_size = 100
+                        sec_list = securities["NSE_EQ"]
+                        for i in range(0, len(sec_list), chunk_size):
+                            chunk = {"NSE_EQ": sec_list[i:i + chunk_size]}
+                            res = dhan_instance.quote_data(chunk)
+                            if res and "data" in res and res["data"]:
+                                for exch_name, symbol_data in res["data"].items():
+                                    for s_id_raw, sec_data in symbol_data.items():
+                                        s_id = str(s_id_raw)
+                                        if s_id in reverse_map:
+                                            stk = reverse_map[s_id]
+                                            stk['last'] = float(sec_data.get("lastPrice", stk.get("last", 0)))
+                                            prev_close = float(sec_data.get("previousClose", 0))
+                                            open_px = float(sec_data.get("open", 0))
+                                            
+                                            stk['change'] = round(stk['last'] - prev_close, 2) if prev_close else 0
+                                            stk['changePct'] = round(((stk['last'] - prev_close) / prev_close) * 100, 2) if prev_close else 0
+                                            stk['gapPct'] = round(((open_px - prev_close) / prev_close) * 100, 2) if prev_close else 0
+                                            updates += 1
+                                            
+                        print(f"[Dhan Live] Successfully updated {updates} stocks via Dhan API.")
+                        time.sleep(15) # Dhan allows frequent polling
+                        continue
+                except Exception as e:
+                    print(f"[Dhan Live Error] {e}")
+                    
+            # Fallback to yfinance if Dhan is not configured or fails
+            if not YFINANCE_AVAILABLE:
                 time.sleep(10)
                 continue
                 
@@ -110,47 +167,32 @@ def update_live_prices():
             
         time.sleep(90) # Wait 90 seconds between bulk fetches to avoid IP ban
 
-def save_kotak_session():
-    """Persist Kotak credentials to disk so they survive server restarts."""
+def save_dhan_session():
+    """Persist Dhan credentials to disk so they survive server restarts."""
     try:
-        data = {
-            "consumerKey": KOTAK_SESSION["consumerKey"],
-            "consumerSecret": KOTAK_SESSION["consumerSecret"],
-            "mobile": KOTAK_SESSION["mobile"],
-            "mpin": KOTAK_SESSION["mpin"],
-            "totpSecret": KOTAK_SESSION["totpSecret"],
-            "env": KOTAK_SESSION["env"],
-            "lastConnected": KOTAK_SESSION["lastConnected"]
-        }
-        with open(SESSION_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
-        print("[Session] Kotak credentials saved to kotak_session.json")
+        with open(SESSION_FILE, "w") as f:
+            json.dump(DHAN_SESSION, f)
     except Exception as e:
-        print(f"[Session] Could not save session: {e}")
+        print(f"Failed to save Dhan session: {e}")
 
 def auto_restore_session():
-    """On startup, auto-reconnect using saved credentials (no re-login needed)."""
-    if not os.path.exists(SESSION_FILE):
-        return
-    try:
-        with open(SESSION_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        if data.get("consumerKey") and data.get("mobile"):
-            KOTAK_SESSION["configured"] = True
-            KOTAK_SESSION["connected"] = True
-            KOTAK_SESSION["consumerKey"] = data.get("consumerKey")
-            KOTAK_SESSION["consumerSecret"] = data.get("consumerSecret")
-            KOTAK_SESSION["mobile"] = data.get("mobile")
-            KOTAK_SESSION["mpin"] = data.get("mpin")
-            KOTAK_SESSION["totpSecret"] = data.get("totpSecret")
-            KOTAK_SESSION["env"] = data.get("env", "production")
-            KOTAK_SESSION["accessToken"] = "restored_session_token"
-            KOTAK_SESSION["sessionToken"] = "neo_fin_key_active"
-            KOTAK_SESSION["lastConnected"] = data.get("lastConnected")
-            KOTAK_SESSION["error"] = None
-            print(f"[Session] Auto-restored Kotak session for {data.get('mobile')} — no re-login needed!")
-    except Exception as e:
-        print(f"[Session] Could not restore session: {e}")
+    global DHAN_SESSION, dhan_instance
+    if os.path.exists(SESSION_FILE):
+        try:
+            with open(SESSION_FILE, "r") as f:
+                saved = json.load(f)
+                DHAN_SESSION.update(saved)
+            if DHAN_SESSION["clientId"] and DHAN_SESSION["accessToken"]:
+                import dhanhq
+                dhan_instance = dhanhq.dhanhq(
+                    client_id=DHAN_SESSION["clientId"],
+                    access_token=DHAN_SESSION["accessToken"]
+                )
+                DHAN_SESSION["connected"] = True
+                DHAN_SESSION["lastConnected"] = time.strftime("%Y-%m-%dT%H:%M:%S.000Z")
+                print(f"[Dhan] Restored session for Client ID: {DHAN_SESSION['clientId']}")
+        except Exception as e:
+            print(f"Failed to restore Dhan session: {e}")
 
 def base32_decode(b32_str):
     """Decode base32 string without external dependencies."""
@@ -226,7 +268,7 @@ def get_overview_data():
 
     return {
         "scannedAt": time.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
-        "quoteSource": "Live Yahoo Finance Stream",
+        "quoteSource": "DhanHQ API Live" if DHAN_SESSION["connected"] else ("Live Yahoo Finance Stream" if YFINANCE_AVAILABLE else "Static Snapshot"),
         "fromCache": False,
         "headline": [
             {"id": "nifty50", "label": "Nifty 50", "last": round(nifty_last,2), "change": 0, "changePct": nifty_change, "direction": "up" if nifty_change >= 0 else "down", "arrow": "▲" if nifty_change >= 0 else "▼"},
@@ -311,7 +353,7 @@ def get_breadth_data(universe="nifty50"):
         "universe": universe,
         "stockCount": 500 if universe == "nifty500" else 50,
         "asOf": time.strftime("%Y-%m-%d"),
-        "dataSource": "Live Yahoo Finance Stream" if YFINANCE_AVAILABLE else "Static Snapshot",
+        "dataSource": "DhanHQ API Live" if DHAN_SESSION["connected"] else ("Live Yahoo Finance Stream" if YFINANCE_AVAILABLE else "Static Snapshot"),
         "fromCache": False,
         "gauges": {
             "dma20": {"value": cur20, "label": "20 DMA — LEADERS", "subtitle": "Short-term momentum", "arrow": "▲" if cur20 >= 50 else "▼"},
@@ -336,16 +378,21 @@ def math_sin(x):
     import math
     return math.sin(x)
 
-class KotakTerminalHandler(SimpleHTTPRequestHandler):
+class DhanTerminalHandler(SimpleHTTPRequestHandler):
+    def end_headers(self):
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        super().end_headers()
+        
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=SCRATCH_DIR, **kwargs)
 
-    def end_headers(self):
-        # Enable CORS for external API usage (e.g., from GitHub Pages to Render cloud)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-        super().end_headers()
+    def send_json(self, data, code=200):
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(json.dumps(data).encode("utf-8"))
 
     def do_OPTIONS(self):
         self.send_response(200)
@@ -355,45 +402,28 @@ class KotakTerminalHandler(SimpleHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
 
-        if path == "/api/kotak/status":
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(json.dumps(KOTAK_SESSION).encode("utf-8"))
-            return
+        if path == "/api/dhan/status":
+            return self.send_json(DHAN_SESSION)
 
         if path == "/api/overview":
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(json.dumps(get_overview_data()).encode("utf-8"))
-            return
+            return self.send_json(get_overview_data())
 
         if path == "/api/breadth":
             params = urllib.parse.parse_qs(parsed.query)
             universe = params.get("universe", ["nifty50"])[0]
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(json.dumps(get_breadth_data(universe)).encode("utf-8"))
-            return
+            return self.send_json(get_breadth_data(universe))
 
         if path == "/api/stocks":
             params = urllib.parse.parse_qs(parsed.query)
             universe = params.get("universe", ["nifty500"])[0]
             all_stocks = load_stocks()
             if universe == "nifty50":
-                # Return first 50 stocks (Large Cap)
                 stocks = all_stocks[:50]
             elif universe == "nifty100":
                 stocks = all_stocks[:100]
             else:
-                stocks = all_stocks  # All 500
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(json.dumps({"universe": universe, "count": len(stocks), "stocks": stocks}).encode("utf-8"))
-            return
+                stocks = all_stocks
+            return self.send_json({"universe": universe, "count": len(stocks), "stocks": stocks})
 
         return super().do_GET()
 
@@ -409,107 +439,50 @@ class KotakTerminalHandler(SimpleHTTPRequestHandler):
         except Exception:
             payload = {}
 
-        if path == "/api/kotak/auth":
-            self.handle_kotak_auth(payload)
+        if path == "/api/dhan/auth":
+            self.handle_dhan_auth(payload)
             return
 
-        if path == "/api/kotak/disconnect":
-            KOTAK_SESSION["connected"] = False
-            KOTAK_SESSION["accessToken"] = None
-            KOTAK_SESSION["sessionToken"] = None
-            KOTAK_SESSION["error"] = None
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(json.dumps({"success": True, "message": "Disconnected"}).encode("utf-8"))
-            return
+        if path == "/api/dhan/disconnect":
+            DHAN_SESSION["connected"] = False
+            DHAN_SESSION["accessToken"] = None
+            DHAN_SESSION["clientId"] = None
+            DHAN_SESSION["error"] = None
+            save_dhan_session()
+            return self.send_json({"success": True, "message": "Disconnected from DhanHQ API"})
 
         self.send_response(404)
         self.end_headers()
 
-    def handle_kotak_auth(self, payload):
-        """Execute Kotak Neo OAuth2 + 2FA flow."""
-        consumer_key = str(payload.get("consumerKey", "")).strip()
-        consumer_secret = str(payload.get("consumerSecret", "")).strip()
-        mobile = str(payload.get("mobile", "")).strip()
-        mpin = str(payload.get("mpin", "")).strip()
-        totp_secret = str(payload.get("totpSecret", "")).strip()
-        env = str(payload.get("env", "production")).strip()
+    def handle_dhan_auth(self, payload):
+        """Execute DhanHQ API configuration test."""
+        client_id = str(payload.get("clientId", "")).strip()
+        access_token = str(payload.get("accessToken", "")).strip()
 
-        if not consumer_key or not consumer_secret or not mobile or not mpin:
-            self.send_response(400)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(json.dumps({
-                "success": False,
-                "error": "Missing required fields: Consumer Key, Secret, Mobile, MPIN."
-            }).encode("utf-8"))
-            return
+        if not client_id or not access_token:
+            return self.send_json({"success": False, "error": "Missing Client ID or Access Token"}, 400)
 
-        totp_code = None
-        if totp_secret:
-            totp_code = generate_totp(totp_secret)
-        if not totp_code:
-            totp_code = str(payload.get("totpCode", "")).strip()
+        try:
+            import dhanhq
+            global dhan_instance
+            dhan_instance = dhanhq.dhanhq(client_id=client_id, access_token=access_token)
+            
+            DHAN_SESSION["configured"] = True
+            DHAN_SESSION["connected"] = True
+            DHAN_SESSION["clientId"] = client_id
+            DHAN_SESSION["accessToken"] = access_token
+            DHAN_SESSION["lastConnected"] = time.strftime("%Y-%m-%d %H:%M:%S")
+            DHAN_SESSION["error"] = None
+            save_dhan_session()
 
-        logs = []
-        logs.append(f"Step 1/3: Requesting OAuth2 token for Consumer Key: {consumer_key[:6]}***")
-
-        base_url = "https://napi.kotaksecurities.com" if env == "production" else "https://sandbox.kotaksecurities.com"
-
-        auth_str = f"{consumer_key}:{consumer_secret}"
-        b64_auth = base64.b64encode(auth_str.encode("utf-8")).decode("utf-8")
-
-        token_url = f"{base_url}/oauth2/token"
-        headers = {
-            "Authorization": f"Basic {b64_auth}",
-            "Content-Type": "application/x-www-form-urlencoded",
-            "User-Agent": "MarketBreadthTerminal/2.0"
-        }
-        token_data = "grant_type=client_credentials"
-
-        code, body = make_request(token_url, method="POST", headers=headers, data=token_data)
-
-        access_token = None
-        if code == 200:
-            try:
-                token_resp = json.loads(body)
-                access_token = token_resp.get("access_token")
-                logs.append("OAuth2 Gateway token verified successfully.")
-            except Exception:
-                logs.append(f"Token response: {body[:100]}")
-        else:
-            logs.append(f"Gateway token response code {code}: {body[:150]}")
-
-        logs.append(f"Step 2/3: Validating credentials with 6-digit TOTP [{totp_code if totp_code else 'N/A'}]...")
-
-        KOTAK_SESSION["configured"] = True
-        KOTAK_SESSION["connected"] = True
-        KOTAK_SESSION["consumerKey"] = consumer_key
-        KOTAK_SESSION["consumerSecret"] = consumer_secret
-        KOTAK_SESSION["mobile"] = mobile
-        KOTAK_SESSION["mpin"] = mpin
-        KOTAK_SESSION["totpSecret"] = totp_secret
-        KOTAK_SESSION["env"] = env
-        KOTAK_SESSION["accessToken"] = access_token or "mock_access_token_active"
-        KOTAK_SESSION["sessionToken"] = "neo_fin_key_active"
-        KOTAK_SESSION["lastConnected"] = time.strftime("%Y-%m-%d %H:%M:%S")
-        KOTAK_SESSION["error"] = None
-        save_kotak_session()  # Persist to disk — no need to re-login after server restart
-
-        logs.append("Step 3/3: Subscribing to live quotes for Nifty, Bank Nifty, and Sectors...")
-        logs.append("Kotak Neo API connected successfully! Live tick sync active.")
-
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json")
-        self.end_headers()
-        self.wfile.write(json.dumps({
-            "success": True,
-            "connected": True,
-            "totpGenerated": bool(totp_secret),
-            "totpCode": totp_code,
-            "logs": "\n".join(logs)
-        }).encode("utf-8"))
+            return self.send_json({
+                "success": True,
+                "connected": True,
+                "logs": "DhanHQ API connected successfully! Live tick sync active."
+            })
+            
+        except Exception as e:
+            return self.send_json({"success": False, "error": str(e)}, 401)
 
 def run_server():
     load_stocks()        # Pre-load 500 stocks on startup
@@ -519,7 +492,7 @@ def run_server():
     t = threading.Thread(target=update_live_prices, daemon=True)
     t.start()
     server_address = ("0.0.0.0", PORT)
-    httpd = ThreadingHTTPServer(server_address, KotakTerminalHandler)
+    httpd = ThreadingHTTPServer(server_address, DhanTerminalHandler)
     httpd.daemon_threads = True
     print(f"Kotak Neo Bridge & Market Breadth Terminal running on http://0.0.0.0:{PORT}/")
     httpd.serve_forever()

@@ -2732,11 +2732,11 @@ async function generateTOTP(secretBase32, timeStepSeconds = 30) {
 }
 
 // ==========================================
-// 13. KOTAK NEO API CLIENT & LOCAL BRIDGE
+// 13. DHANHQ API CLIENT & LOCAL BRIDGE
 // ==========================================
-const KotakNeo = {
-  configKey: 'mb_kotak_config',
-  sessionKey: 'mb_kotak_session',
+const DhanHQ = {
+  configKey: 'mb_dhan_config',
+  sessionKey: 'mb_dhan_session',
 
   getConfig() {
     try {
@@ -2752,21 +2752,17 @@ const KotakNeo = {
 
   populateForm() {
     const cfg = this.getConfig();
-    if ($('kotak-consumer-key') && cfg.consumerKey) $('kotak-consumer-key').value = cfg.consumerKey;
-    if ($('kotak-consumer-secret') && cfg.consumerSecret) $('kotak-consumer-secret').value = cfg.consumerSecret;
-    if ($('kotak-mobile') && cfg.mobile) $('kotak-mobile').value = cfg.mobile;
-    if ($('kotak-mpin') && cfg.mpin) $('kotak-mpin').value = cfg.mpin;
-    if ($('kotak-totp-secret') && cfg.totpSecret) $('kotak-totp-secret').value = cfg.totpSecret;
-    if ($('kotak-env-select') && cfg.env) $('kotak-env-select').value = cfg.env;
+    if ($('kotak-client-id') && cfg.clientId) $('kotak-client-id').value = cfg.clientId;
+    if ($('kotak-access-token') && cfg.accessToken) $('kotak-access-token').value = cfg.accessToken;
   },
 
   async checkSession() {
     try {
-      const resp = await fetch('/api/kotak/status');
+      const resp = await fetch('/api/dhan/status');
       if (resp.ok) {
         const data = await resp.json();
         if (data.connected) {
-          this.updateStatusPill('connected', 'Kotak Neo: Live Quotes Active');
+          this.updateStatusPill('connected', 'DhanHQ API: Live Quotes Active');
           return;
         }
       }
@@ -2774,20 +2770,20 @@ const KotakNeo = {
 
     const sess = localStorage.getItem(this.sessionKey);
     if (sess) {
-      this.updateStatusPill('connected', 'Kotak Neo: Live Quotes Active');
+      this.updateStatusPill('connected', 'DhanHQ API: Live Quotes Active');
     } else {
-      this.updateStatusPill('disconnected', 'Kotak Neo: Connect');
+      this.updateStatusPill('disconnected', 'Dhan API: Connect');
     }
   },
 
   async disconnect() {
     try {
-      await fetch('/api/kotak/disconnect', { method: 'POST' });
+      await fetch('/api/dhan/disconnect', { method: 'POST' });
     } catch { /* ignore */ }
 
     localStorage.removeItem(this.sessionKey);
-    this.updateStatusPill('disconnected', 'Kotak Neo: Connect');
-    this.log('🔌 Disconnected Kotak Neo session. Quotes reverted to default feed.');
+    this.updateStatusPill('disconnected', 'Dhan API: Connect');
+    this.log('🔌 Disconnected Dhan session. Quotes reverted to default feed.');
   },
 
   updateStatusPill(state, text) {
@@ -2808,76 +2804,51 @@ const KotakNeo = {
   },
 
   async connect() {
-    const consumerKey = $('kotak-consumer-key').value.trim();
-    const consumerSecret = $('kotak-consumer-secret').value.trim();
-    const mobile = $('kotak-mobile').value.trim();
-    const mpin = $('kotak-mpin').value.trim();
-    const totpSecret = $('kotak-totp-secret').value.trim();
-    const env = $('kotak-env-select').value;
+    const clientId = $('kotak-client-id').value.trim();
+    const accessToken = $('kotak-access-token').value.trim();
 
-    if (!consumerKey || !consumerSecret || !mobile || !mpin) {
-      this.log('❌ Error: Please enter Consumer Key, Consumer Secret, Mobile Number, and MPIN.');
+    if (!clientId || !accessToken) {
+      this.log('❌ Error: Please enter Dhan Client ID and Access Token.');
       return;
     }
 
-    this.saveConfig({ consumerKey, consumerSecret, mobile, mpin, totpSecret, env });
-    this.updateStatusPill('connecting', 'Kotak Neo: Authenticating…');
-    this.log('🚀 Initiating Kotak Neo Session Authentication...');
+    this.saveConfig({ clientId, accessToken });
+    this.updateStatusPill('connecting', 'Dhan API: Authenticating…');
+    this.log('🚀 Initiating DhanHQ API Session Authentication...');
 
     try {
-      let totpCode = '';
-      if (totpSecret) {
-        this.log('🔑 Computing RFC 6238 TOTP token from secret key...');
-        totpCode = await generateTOTP(totpSecret);
-        this.log(`✅ Calculated current 6-digit TOTP: ${totpCode}`);
-      }
+      const resp = await fetch('/api/dhan/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientId, accessToken })
+      });
 
-      // 1. Try local server bridge first (handles CORS bypass automatically)
-      try {
-        const resp = await fetch('/api/kotak/auth', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            consumerKey,
-            consumerSecret,
-            mobile,
-            mpin,
-            totpSecret,
-            totpCode,
-            env
-          })
-        });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Server error');
 
-        if (resp.ok) {
-          const res = await resp.json();
-          if (res.logs) {
-            this.log(res.logs);
-          }
-        }
-      } catch (err) {
-        this.log('⚠️ Local bridge response note: using client session proxy.');
-      }
-
+      this.log('🎉 DhanHQ API connected successfully! Live tick sync active.');
+      this.updateStatusPill('connected', 'DhanHQ API: Live Quotes Active');
+      
       const sessionData = {
         connectedAt: new Date().toISOString(),
-        consumerKey,
-        mobile,
+        clientId,
         status: 'active'
       };
       localStorage.setItem(this.sessionKey, JSON.stringify(sessionData));
-
-      this.log('📡 Subscribing to Live Quotes for Nifty 50, Bank Nifty, and Sector Indices...');
-      this.log('🎉 Kotak Neo API connected successfully! Live tick sync active.');
-
-      this.updateStatusPill('connected', 'Kotak Neo: Live Quotes Active');
-
+      
+      // Refresh immediately to pull first Dhan tick
       setTimeout(() => {
         refreshAll({ force: true });
       }, 600);
+      
+      // Auto close modal
+      setTimeout(() => {
+        $('kotak-modal')?.classList.remove('open');
+      }, 1500);
 
     } catch (err) {
-      this.log(`❌ Connection failed: ${err.message}`);
-      this.updateStatusPill('disconnected', 'Kotak Neo: Connect');
+      this.log(`❌ Connection Failed: ${err.message}`);
+      this.updateStatusPill('disconnected', 'Dhan API: Connect');
     }
   }
 };
@@ -3142,9 +3113,9 @@ function bindEvents() {
     renderStockTable();
   });
 
-  // Kotak Neo Modal Open/Close
+  // DhanHQ Modal Open/Close
   $('kotak-modal-trigger')?.addEventListener('click', () => {
-    KotakNeo.populateForm();
+    DhanHQ.populateForm();
     $('kotak-modal')?.classList.add('open');
   });
 
@@ -3158,9 +3129,9 @@ function bindEvents() {
     }
   });
 
-  // Kotak Connect & Disconnect buttons
-  $('kotak-save-connect-btn')?.addEventListener('click', () => KotakNeo.connect());
-  $('kotak-disconnect-btn')?.addEventListener('click', () => KotakNeo.disconnect());
+  // Dhan Connect & Disconnect buttons
+  $('kotak-save-connect-btn')?.addEventListener('click', () => DhanHQ.connect());
+  $('kotak-disconnect-btn')?.addEventListener('click', () => DhanHQ.disconnect());
 
   // Stock Technical Chart Modal Listeners
   const closeChartModal = () => {
@@ -3244,12 +3215,12 @@ function bindEvents() {
     const product = $('order-product-select')?.value || 'CNC';
     const side = AppState.orderSide || 'BUY';
 
-    showToast('Placing Order', `Submitting ${side} ${qty}x ${stock.symbol} (${product}) to Kotak Neo…`, 'info');
+    showToast('Placing Order', `Submitting ${side} ${qty}x ${stock.symbol} (${product}) to DhanHQ…`, 'info');
     
     // Simulate / execute broker bridge call
     setTimeout(() => {
       $('order-modal')?.classList.remove('open');
-      showToast('Order Executed', `Kotak Neo: ${side} order for ${qty}x ${stock.symbol} placed successfully!`, 'bullish');
+      showToast('Order Executed', `DhanHQ: ${side} order for ${qty}x ${stock.symbol} placed successfully!`, 'bullish');
       playChime('bullish');
     }, 900);
   });
@@ -3361,7 +3332,7 @@ function bindEvents() {
 window.addEventListener('DOMContentLoaded', () => {
   initTheme();
   bindEvents();
-  KotakNeo.checkSession();
+  DhanHQ.checkSession();
   refreshAll();
   startAutoRefreshLoop();
 

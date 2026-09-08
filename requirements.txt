@@ -1,3 +1,4 @@
 # Dependencies for live Yahoo Finance data streaming
 yfinance
 pandas
+dhanhq

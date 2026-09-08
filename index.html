@@ -10,7 +10,7 @@
   <title>Market Breadth Intelligence Terminal | Professional Market Health Cockpit</title>
   
   <!-- CSS Stylesheets -->
-  <link rel="stylesheet" href="breadth_app.css?v=16" />
+  <link rel="stylesheet" href="breadth_app.css?v=18" />
   
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -43,10 +43,10 @@
     </div>
 
     <div class="header-controls">
-      <!-- Kotak Neo Status Pill -->
-      <button id="kotak-modal-trigger" class="kotak-status-pill disconnected" title="Kotak Neo API Settings & Authentication">
+      <!-- DhanHQ API Status Pill -->
+      <button id="kotak-modal-trigger" class="kotak-status-pill disconnected" title="DhanHQ API Settings & Authentication">
         <i data-lucide="link-2"></i>
-        <span id="kotak-status-text">Kotak Neo: Connect</span>
+        <span id="kotak-status-text">Dhan API: Connect</span>
       </button>
 
       <!-- Live Status -->
@@ -762,17 +762,17 @@
       <strong>Market Breadth Pro Terminal</strong> &bull; Quantitative Market Health & Internal Breadth Cockpit
     </div>
     <div>
-      Data Feed: Kotak Neo (Live Quotes) & Yahoo/Dhan (DMA History) &bull; Not financial advice
+      Data Feed: DhanHQ (Live Quotes) & Yahoo/Dhan (DMA History) &bull; Not financial advice
     </div>
   </footer>
 
-  <!-- Kotak Neo API Configuration Modal -->
+  <!-- DhanHQ API Configuration Modal -->
   <div id="kotak-modal" class="modal-overlay" aria-hidden="true">
     <div class="modal-card">
       <div class="modal-header">
         <div class="modal-title">
           <i data-lucide="shield-check" style="color: var(--accent-cyan);"></i>
-          <span>Kotak Neo API Credentials &amp; 2FA Auth</span>
+          <span>DhanHQ API Credentials</span>
         </div>
         <button id="kotak-modal-close" class="modal-close-btn" title="Close Modal">
           <i data-lucide="x"></i>
@@ -781,41 +781,15 @@
 
       <div class="form-grid">
         <div class="form-group full-width">
-          <label class="form-label">API Gateway Environment</label>
-          <select id="kotak-env-select" class="form-input">
-            <option value="production">Live Production (napi.kotaksecurities.com)</option>
-            <option value="sandbox">Developer Sandbox</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Consumer Key</label>
-          <input type="text" id="kotak-consumer-key" class="form-input mono" placeholder="e.g. lM983xYz..." />
-          <span class="form-help">From Neo API Developer Portal</span>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Consumer Secret</label>
-          <input type="password" id="kotak-consumer-secret" class="form-input mono" placeholder="••••••••••••" />
-          <span class="form-help">Client Secret key</span>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Registered Mobile / UCC</label>
-          <input type="text" id="kotak-mobile" class="form-input mono" placeholder="e.g. 9876543210" />
-          <span class="form-help">10-digit mobile or Neo Client ID</span>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">6-Digit MPIN</label>
-          <input type="password" id="kotak-mpin" maxlength="6" class="form-input mono" placeholder="••••••" />
-          <span class="form-help">Trading MPIN</span>
+          <label class="form-label">DhanHQ Client ID</label>
+          <input type="text" id="kotak-client-id" class="form-input mono" placeholder="e.g. 1000000123" />
+          <span class="form-help">Your 10-digit Dhan Client ID</span>
         </div>
 
         <div class="form-group full-width">
-          <label class="form-label">TOTP Secret (Automated 2FA)</label>
-          <input type="text" id="kotak-totp-secret" class="form-input mono" placeholder="e.g. JBSWY3DPEHPK3PXP" />
-          <span class="form-help">Base32 Secret key from authenticator for hands-free 2FA token generation (RFC 6238)</span>
+          <label class="form-label">Access Token (API Key)</label>
+          <input type="password" id="kotak-access-token" class="form-input mono" placeholder="••••••••••••••••••••••••••••••••" />
+          <span class="form-help">Your DhanHQ API Access Token (Generate this from web.dhan.co)</span>
         </div>
 
         <div class="form-group full-width">
@@ -941,13 +915,13 @@
     </div>
   </div>
 
-  <!-- 2. Kotak Neo One-Click Order Ticket Modal with Automated Bracket Risk Calculator -->
+  <!-- 2. DhanHQ One-Click Order Ticket Modal with Automated Bracket Risk Calculator -->
   <div id="order-modal" class="modal-overlay" aria-hidden="true">
     <div class="modal-card" style="max-width: 500px;">
       <div class="modal-header">
         <div class="modal-title">
           <i data-lucide="zap" style="color: var(--accent-gold);"></i>
-          <span>Kotak Neo &bull; Precision Risk Order Ticket</span>
+          <span>DhanHQ &bull; Precision Risk Order Ticket</span>
         </div>
         <button id="order-modal-close" class="modal-close-btn" title="Close Modal">
           <i data-lucide="x"></i>
@@ -1048,7 +1022,7 @@
         </div>
 
         <button id="order-submit-btn" class="btn-action primary full-width" style="margin-top: 1rem; padding: 0.65rem;">
-          <i data-lucide="check-circle"></i> Place Protected Order via Kotak Neo
+          <i data-lucide="check-circle"></i> Place Protected Order via DhanHQ
         </button>
       </div>
     </div>
@@ -1105,6 +1079,6 @@
   <div id="toast-container" class="toast-container"></div>
 
   <!-- App Logic Engine -->
-  <script src="breadth_app.js?v=16"></script>
+  <script src="breadth_app.js?v=18"></script>
 </body>
 </html>

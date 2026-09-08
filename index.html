@@ -10,7 +10,7 @@
   <title>Market Breadth Intelligence Terminal | Professional Market Health Cockpit</title>
   
   <!-- CSS Stylesheets -->
-  <link rel="stylesheet" href="breadth_app.css?v=19" />
+  <link rel="stylesheet" href="breadth_app.css?v=20" />
   
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -175,7 +175,7 @@
       </div>
 
       <!-- Right: Tactical Trader Playbook & Institutional Breadth Oscillators -->
-      <div class="playbook-card">
+      <div class="playbook-card" style="display: none;">
         <div class="playbook-header">
           <div class="playbook-title">
             <i data-lucide="shield-alert"></i> Tactical Trader Playbook
@@ -498,8 +498,8 @@
       </div>
     </section>
 
-  <!-- Options & Derivatives Radar -->
-    <section class="derivatives-radar-section">
+  <!-- Options & Derivatives Radar - HIDDEN (No live data) -->
+    <section class="derivatives-radar-section" style="display: none;">
       <div class="section-head">
         <div>
           <h2 class="section-title">
@@ -672,7 +672,6 @@
               <th data-sort="sector">Sector ↕</th>
               <th data-sort="last">LTP (₹) ↕</th>
               <th data-sort="changePct">Day Chg % ↕</th>
-              <th data-sort="gapPct" style="text-align: center;">Gap % ↕</th>
               <th style="width: 65px; text-align: center;">7D Trend</th>
               <th style="text-align: center;" title="Multi-Timeframe Trend Alignment [Daily | Weekly | Monthly]">MTF Matrix</th>
               <th data-sort="rsi" style="text-align: center;">RSI (14) ↕</th>
@@ -1079,6 +1078,6 @@
   <div id="toast-container" class="toast-container"></div>
 
   <!-- App Logic Engine -->
-  <script src="breadth_app.js?v=19"></script>
+  <script src="breadth_app.js?v=20"></script>
 </body>
 </html>

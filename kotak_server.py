@@ -264,6 +264,57 @@ def get_overview_data():
         except:
             pass
 
+    global _STOCKS_CACHE
+    stocks = _STOCKS_CACHE if _STOCKS_CACHE else []
+
+    def aggregate_group(group_id, label, subtitle, stock_list):
+        if not stock_list: return None
+        avg_change = round(sum(s.get('changePct', 0) for s in stock_list) / len(stock_list), 2)
+        dma20_pct = sum(1 for s in stock_list if s.get('dma20', False)) / len(stock_list)
+        dma50_pct = sum(1 for s in stock_list if s.get('dma50', False)) / len(stock_list)
+        dma200_pct = sum(1 for s in stock_list if s.get('dma200', False)) / len(stock_list)
+        bias = "mixed"
+        if dma50_pct >= 0.5 and dma200_pct >= 0.5: bias = "bullish"
+        if dma50_pct < 0.5 and dma200_pct < 0.5: bias = "bearish"
+        return {
+            "id": group_id, "label": label, "subtitle": subtitle,
+            "last": 0, "change": 0, "changePct": avg_change,
+            "direction": "up" if avg_change >= 0 else "down",
+            "arrow": "▲" if avg_change >= 0 else "▼",
+            "ema": {
+                "ema20": {"above": dma20_pct >= 0.5},
+                "ema50": {"above": dma50_pct >= 0.5},
+                "ema200": {"above": dma200_pct >= 0.5},
+                "bias": bias
+            }
+        }
+
+    size = []
+    if len(stocks) >= 250:
+        size = [
+            aggregate_group("largeCap", "Large Cap", "Nifty 100", stocks[:100]),
+            aggregate_group("midCap", "Mid Cap", "Nifty Midcap 150", stocks[100:250]),
+            aggregate_group("smallCap", "Small Cap", "Nifty Smallcap 250", stocks[250:])
+        ]
+
+    sector_map = {
+        "it": "IT", "bank": "Bank", "fin": "Financial Services", "auto": "Auto",
+        "pharma": "Pharma", "fmcg": "FMCG", "metal": "Metal", "energy": "Energy",
+        "realty": "Realty", "media": "Media", "psuBank": "PSU Bank",
+        "infra": "Infra", "healthcare": "Healthcare", "consumerDurables": "Consumer Durables", "chemicals": "Chemicals"
+    }
+    sectors = []
+    for k, v in sector_map.items():
+        sub = [s for s in stocks if s.get('sector') == v]
+        if sub:
+            agg = aggregate_group(k, v, "", sub)
+            if agg: sectors.append(agg)
+
+    # Calculate proxies for oscillators based on A/D ratio if possible
+    advances = sum(1 for s in stocks if s.get('changePct', 0) > 0)
+    declines = sum(1 for s in stocks if s.get('changePct', 0) < 0)
+    ad_ratio = round(advances / declines, 2) if declines > 0 else 1.0
+
     return {
         "scannedAt": time.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
         "quoteSource": "DhanHQ API Live" if DHAN_SESSION["connected"] else ("Live Yahoo Finance Stream" if YFINANCE_AVAILABLE else "Static Snapshot"),
@@ -273,37 +324,11 @@ def get_overview_data():
             {"id": "bankNifty", "label": "Bank Nifty", "last": round(bnifty_last,2), "change": 0, "changePct": bnifty_change, "direction": "up" if bnifty_change >= 0 else "down", "arrow": "▲" if bnifty_change >= 0 else "▼"},
             {"id": "indiaVix", "label": "India VIX", "last": vix_last, "change": 0, "changePct": vix_change, "direction": "down", "arrow": "▼"}
         ],
-        "size": [
-            {"id": "largeCap", "label": "Large Cap", "subtitle": "Nifty 100", "last": 25023.15, "change": 9.70, "changePct": 0.04, "direction": "up", "arrow": "▲", "ema": {"ema20": {"above": False}, "ema50": {"above": False}, "ema200": {"above": False}, "bias": "bearish"}},
-            {"id": "midCap", "label": "Mid Cap", "subtitle": "Nifty Midcap 150", "last": 23168.35, "change": -52.15, "changePct": -0.22, "direction": "down", "arrow": "▼", "ema": {"ema20": {"above": False}, "ema50": {"above": False}, "ema200": {"above": True}, "bias": "mixed"}},
-            {"id": "smallCap", "label": "Small Cap", "subtitle": "Nifty Smallcap 250", "last": 18481.40, "change": 36.45, "changePct": 0.20, "direction": "up", "arrow": "▲", "ema": {"ema20": {"above": True}, "ema50": {"above": True}, "ema200": {"above": True}, "bias": "bullish"}}
-        ],
-        "sectors": [
-            {"id": "it", "label": "IT", "last": 30695.10, "change": -143.75, "changePct": -0.47, "direction": "down", "arrow": "▼", "ema": {"ema20": {"above": False}, "ema50": {"above": True}, "ema200": {"above": False}, "bias": "mixed"}},
-            {"id": "bank", "label": "Bank", "last": 57369.65, "change": -10.95, "changePct": -0.02, "direction": "down", "arrow": "▼", "ema": {"ema20": {"above": False}, "ema50": {"above": True}, "ema200": {"above": True}, "bias": "bullish"}},
-            {"id": "fin", "label": "Financial Services", "last": 26051.00, "change": 127.95, "changePct": 0.49, "direction": "up", "arrow": "▲", "ema": {"ema20": {"above": True}, "ema50": {"above": True}, "ema200": {"above": True}, "bias": "bullish"}},
-            {"id": "auto", "label": "Auto", "last": 27710.90, "change": -126.50, "changePct": -0.45, "direction": "down", "arrow": "▼", "ema": {"ema20": {"above": True}, "ema50": {"above": True}, "ema200": {"above": True}, "bias": "bullish"}},
-            {"id": "pharma", "label": "Pharma", "last": 26478.10, "change": -180.55, "changePct": -0.68, "direction": "down", "arrow": "▼", "ema": {"ema20": {"above": False}, "ema50": {"above": True}, "ema200": {"above": True}, "bias": "bullish"}},
-            {"id": "fmcg", "label": "FMCG", "last": 45892.75, "change": -62.90, "changePct": -0.14, "direction": "down", "arrow": "▼", "ema": {"ema20": {"above": False}, "ema50": {"above": False}, "ema200": {"above": False}, "bias": "bearish"}},
-            {"id": "metal", "label": "Metal", "last": 13317.45, "change": 141.40, "changePct": 1.07, "direction": "up", "arrow": "▲", "ema": {"ema20": {"above": True}, "ema50": {"above": True}, "ema200": {"above": True}, "bias": "bullish"}},
-            {"id": "energy", "label": "Energy", "last": 38067.85, "change": -72.95, "changePct": -0.19, "direction": "down", "arrow": "▼", "ema": {"ema20": {"above": False}, "ema50": {"above": False}, "ema200": {"above": True}, "bias": "mixed"}},
-            {"id": "realty", "label": "Realty", "last": 907.90, "change": -8.25, "changePct": -0.90, "direction": "down", "arrow": "▼", "ema": {"ema20": {"above": True}, "ema50": {"above": True}, "ema200": {"above": True}, "bias": "bullish"}},
-            {"id": "media", "label": "Media", "last": 1565.45, "change": 4.70, "changePct": 0.30, "direction": "up", "arrow": "▲", "ema": {"ema20": {"above": True}, "ema50": {"above": True}, "ema200": {"above": True}, "bias": "bullish"}},
-            {"id": "psuBank", "label": "PSU Bank", "last": 8514.85, "change": -37.75, "changePct": -0.44, "direction": "down", "arrow": "▼", "ema": {"ema20": {"above": False}, "ema50": {"above": False}, "ema200": {"above": False}, "bias": "bearish"}},
-            {"id": "privateBank", "label": "Private Bank", "last": 27824.50, "change": 76.65, "changePct": 0.28, "direction": "up", "arrow": "▲", "ema": {"ema20": {"above": True}, "ema50": {"above": True}, "ema200": {"above": True}, "bias": "bullish"}},
-            {"id": "infra", "label": "Infra", "last": 9197.80, "change": -6.40, "changePct": -0.07, "direction": "down", "arrow": "▼", "ema": {"ema20": {"above": False}, "ema50": {"above": True}, "ema200": {"above": True}, "bias": "bullish"}},
-            {"id": "healthcare", "label": "Healthcare", "last": 16408.05, "change": -144.15, "changePct": -0.87, "direction": "down", "arrow": "▼", "ema": {"ema20": {"above": False}, "ema50": {"above": True}, "ema200": {"above": True}, "bias": "bullish"}},
-            {"id": "consumerDurables", "label": "Consumer Durables", "last": 39483.80, "change": -168.90, "changePct": -0.43, "direction": "down", "arrow": "▼", "ema": {"ema20": {"above": False}, "ema50": {"above": False}, "ema200": {"above": False}, "bias": "bearish"}},
-            {"id": "chemicals", "label": "Chemicals", "last": 30101.80, "change": -220.65, "changePct": -0.73, "direction": "down", "arrow": "▼", "ema": {"ema20": {"above": False}, "ema50": {"above": False}, "ema200": {"above": False}, "bias": "bearish"}}
-        ],
+        "size": size,
+        "sectors": sorted(sectors, key=lambda x: x['changePct'], reverse=True) if sectors else [],
         "derivatives": {
-            "fiiCash": 1428.5,
-            "diiCash": 2190.2,
-            "fiiFuturesLongPct": 64.2,
-            "niftyPcr": 1.18,
-            "bankNiftyPcr": 1.04,
-            "maxPain": 23900,
-            "vixPercentile": 18
+            "fiiCash": 0, "diiCash": 0, "fiiFuturesLongPct": 0, "niftyPcr": 0, "bankNiftyPcr": 0,
+            "maxPain": 0, "vixPercentile": 0, "adRatio": ad_ratio
         }
     }
 

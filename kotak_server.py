@@ -184,10 +184,8 @@ def auto_restore_session():
                 DHAN_SESSION.update(saved)
             if DHAN_SESSION["clientId"] and DHAN_SESSION["accessToken"]:
                 import dhanhq
-                dhan_instance = dhanhq.dhanhq(
-                    client_id=DHAN_SESSION["clientId"],
-                    access_token=DHAN_SESSION["accessToken"]
-                )
+                ctx = dhanhq.DhanContext(client_id=DHAN_SESSION["clientId"], access_token=DHAN_SESSION["accessToken"])
+                dhan_instance = dhanhq.dhanhq(ctx)
                 DHAN_SESSION["connected"] = True
                 DHAN_SESSION["lastConnected"] = time.strftime("%Y-%m-%dT%H:%M:%S.000Z")
                 print(f"[Dhan] Restored session for Client ID: {DHAN_SESSION['clientId']}")
@@ -465,7 +463,8 @@ class DhanTerminalHandler(SimpleHTTPRequestHandler):
         try:
             import dhanhq
             global dhan_instance
-            dhan_instance = dhanhq.dhanhq(client_id=client_id, access_token=access_token)
+            ctx = dhanhq.DhanContext(client_id=client_id, access_token=access_token)
+            dhan_instance = dhanhq.dhanhq(ctx)
             
             DHAN_SESSION["configured"] = True
             DHAN_SESSION["connected"] = True
